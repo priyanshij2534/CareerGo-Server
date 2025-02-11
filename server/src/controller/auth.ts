@@ -42,6 +42,10 @@ export const RegisterUser = async (input: UserRegistrationDTO): Promise<ApiMessa
         const payload: IUser = {
             name: name,
             emailAddress: emailAddress,
+            institution: {
+                isAssociated: false,
+                institutionId: null
+            },
             accountConfirmation: {
                 status: false,
                 token: token,
@@ -471,7 +475,6 @@ export const ChangePassword = async (accessToken: string, input: UserChangePassw
             message: responseMessage.PASSWORD_CHANGED,
             data: null
         }
-
     } catch (error) {
         const errMessage = error instanceof Error ? error.message : responseMessage.INTERNAL_SERVER_ERROR
         return {
