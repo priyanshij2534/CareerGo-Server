@@ -12,6 +12,7 @@ import healthRouter from './router/healthCheck'
 import awsRouter from './router/s3FileHandler'
 import authRouter from './router/auth'
 import authentication from './middleware/authentication'
+import mailRouter from './router/mailer'
 
 const app: Application = express()
 
@@ -30,11 +31,12 @@ app.use(express.static(path.join(__dirname, '../', 'public')))
 
 // Open Routes
 app.use('/api/v1/auth', authRouter)
+app.use('/api/v1/s3', awsRouter)
+app.use('/api/v1/send/email', mailRouter)
 
 // Restricted Routes
 app.use(authentication)
 app.use('/api/v1/health', healthRouter)
-app.use('/api/v1/s3', awsRouter)
 
 // 404 hander
 app.use((req: Request, _: Response, next: NextFunction) => {
