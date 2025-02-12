@@ -13,6 +13,7 @@ import awsRouter from './router/s3FileHandler'
 import authRouter from './router/auth'
 import authentication from './middleware/authentication'
 import mailRouter from './router/mailer'
+import instiutionRouter from './router/institution'
 
 const app: Application = express()
 
@@ -33,6 +34,7 @@ app.use(express.static(path.join(__dirname, '../', 'public')))
 app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/s3', awsRouter)
 app.use('/api/v1/send/email', mailRouter)
+app.use('/api/v1/institution', instiutionRouter)
 
 // Restricted Routes
 app.use(authentication)
