@@ -65,7 +65,7 @@ export const RegisterUser = async (input: UserRegistrationDTO): Promise<ApiMessa
 
         const newUser = await userModel.create(payload)
 
-        const confirmationUrl = `${config.SERVER_URL}/confirmation/${token}?code=${code}`
+        const confirmationUrl = `${config.CLIENT_URL}/confirmation/${token}?code=${code}`
         const to = [emailAddress]
         const subject = 'Confirm Your Account'
         const HTML = emailVerificationTemplate(confirmationUrl)
@@ -323,7 +323,7 @@ export const ForgotPassword = async (emailAddress: string): Promise<ApiMessage> 
         user.passwordReset.expiry = expiry
         await user.save()
 
-        const resetLink = `${config.CLIENT_URL}/reset-password/${token}`
+        const resetLink = `${config.CLIENT_URL}/resetPassword/${token}`
         const to = [emailAddress]
         const subject = 'Password reset request'
         const HTML = forgotPasswordTemplate(resetLink)
