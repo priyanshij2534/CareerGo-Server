@@ -24,11 +24,27 @@ export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<
             emailAddress: emailAddress
         })
         if (admin || institution) {
-            return {
-                success: false,
-                status: 422,
-                message: responseMessage.ALREADY_IN_USE('EmailAddress'),
-                data: null
+            if (admin && institution) {
+                if (admin.accountConfirmation.status) {
+                    return {
+                        success: false,
+                        status: 422,
+                        message: responseMessage.ALREADY_EXISTS('User', 'emailAddress'),
+                        data: null
+                    }
+                }
+    
+                const deleteAdminResult = await userModel.deleteOne({ _id: admin._id })
+                const deleteInstitutionResult = await institutionModel.deleteOne({ _id: institution._id })
+    
+                if (deleteAdminResult.deletedCount === 0 && deleteInstitutionResult.deletedCount === 0) {
+                    return {
+                        success: false,
+                        status: 500,
+                        message: 'Failed to delete existing unconfirmed institution.',
+                        data: null
+                    }
+                }
             }
         }
 

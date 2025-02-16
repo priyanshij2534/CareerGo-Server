@@ -26,11 +26,24 @@ export const RegisterUser = async (input: UserRegistrationDTO): Promise<ApiMessa
     try {
         const user = await FindUserByEmail(emailAddress)
         if (user) {
-            return {
-                success: false,
-                status: 422,
-                message: responseMessage.ALREADY_EXISTS('User', 'emailAddress'),
-                data: null
+            if (user.accountConfirmation.status) {
+                return {
+                    success: false,
+                    status: 422,
+                    message: responseMessage.ALREADY_EXISTS('User', 'emailAddress'),
+                    data: null
+                }
+            }
+
+            const deletionResult = await userModel.deleteOne({ _id: user._id })
+
+            if (deletionResult.deletedCount === 0) {
+                return {
+                    success: false,
+                    status: 500,
+                    message: 'Failed to delete existing unconfirmed user.',
+                    data: null
+                }
             }
         }
 
@@ -131,6 +144,56 @@ export const VerifyAccount = async (token: string, code: string): Promise<ApiMes
             success: false,
             status: 500,
             message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const ResendVerifyAccount = async (emailAddress: string): Promise<ApiMessage> => {
+    try {
+        const user = await userModel.findOne({
+            emailAddress: emailAddress
+        })
+        if (!user) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('User'),
+                data: null
+            }
+        } else if (user.accountConfirmation.status) {
+            return {
+                success: false,
+                status: 400,
+                message: responseMessage.ACCOUNT_ALREADY_CONFIRMED,
+                data: null
+            }
+        }
+
+        const token = GenerateRandomId()
+        const code = GenerateOTP(6)
+
+        user.accountConfirmation.token = token
+        user.accountConfirmation.code = code
+        await user.save()
+
+        const confirmationUrl = `${config.CLIENT_URL}/confirmation/${token}?code=${code}`
+        const to = [emailAddress]
+        const subject = 'Confirm Your Account'
+        const HTML = emailVerificationTemplate(confirmationUrl)
+        await sendEmail(to, subject, HTML)
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: null
+        }
+    } catch (error) {
+        return {
+            success: false,
+            status: 500,
+            message: `User registration failed: ${error as string}`,
             data: null
         }
     }
