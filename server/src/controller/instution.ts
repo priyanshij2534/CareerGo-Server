@@ -63,7 +63,7 @@ export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<
 
         const newUser = await userModel.create(userPayload)
 
-        const confirmationUrl = `${config.SERVER_URL}/confirmation/${token}?code=${code}`
+        const confirmationUrl = `${config.CLIENT_URL}/confirmation/${token}?code=${code}`
         const to = [emailAddress]
         const confirmAccountSubject = 'Confirm Your Account'
         const confirmAccountHTML = emailVerificationTemplate(confirmationUrl)
