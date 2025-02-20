@@ -12,6 +12,7 @@ export default {
     ERROR_FETCHING: (entity: string, identifier: string) => {
         return `Error while fetching ${entity} with ${identifier}`
     },
+    CONFIRM_YOUR_aCCOUNT: 'Please comfirm your account before login',
     INVALID_CONFIRMATION_LINK: 'Invalid confirmation token or code',
     ACCOUNT_ALREADY_CONFIRMED: 'Account already confirmed',
     LOGIN: 'User logged in successfully',
