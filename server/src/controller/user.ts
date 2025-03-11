@@ -1,6 +1,6 @@
 import responseMessage from '../constants/responseMessage'
 import userModel from '../model/user/userModel'
-import { IDecryptedJwt, IUserAchievement } from '../types/userTypes'
+import { IDecryptedJwt, IUserAchievement, IUserCertification } from '../types/userTypes'
 import { ApiMessage } from '../utils/ApiMessage'
 import { VerifyToken } from '../utils/helper/syncHelpers'
 import config from '../config/config'
@@ -9,6 +9,8 @@ import userBasicInfoModel from '../model/user/Profile/userBasicInfoModel'
 import { UserAchievementDTO } from '../constants/DTO/User/Profile/UserAchievementDTO'
 import userAchievementModel from '../model/user/Profile/userAchievementModel'
 import mongoose from 'mongoose'
+import { UserCertificationDTO } from '../constants/DTO/User/Profile/UserCertificationDTO'
+import userCertificationModel from '../model/user/Profile/userCertificationModel'
 
 export const SelfIdentification = async (accessToken: string): Promise<ApiMessage> => {
     try {
@@ -354,6 +356,191 @@ export const DeleteUserAchievement = async (achievementId: string, userId: strin
             message: responseMessage.SUCCESS,
             data: {
                 achievement: userAchievement
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const CreateUserCertification = async (input: UserCertificationDTO, userId: string): Promise<ApiMessage> => {
+    const { title, issuedBy, startDate, endDate, expiryDate } = input
+
+    try {
+        const user = await userModel.findById(userId)
+        if (!user) {
+            return {
+                success: false,
+                status: 400,
+                message: responseMessage.INVALID_TOKEN,
+                data: null
+            }
+        }
+
+        const certificationPayload: IUserCertification = {
+            userId: user.id as unknown as mongoose.Schema.Types.ObjectId,
+            title: title,
+            issuedBy: issuedBy,
+            startDate: startDate,
+            endDate: endDate ? endDate : null,
+            expiryDate: expiryDate ? expiryDate : null
+        }
+
+        const newCertification = await userCertificationModel.create(certificationPayload)
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                certification: newCertification
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const GetAllUserCertification = async (userId: string): Promise<ApiMessage> => {
+    try {
+        const user = await userModel.findById(userId)
+        if (!user) {
+            return {
+                success: false,
+                status: 400,
+                message: responseMessage.INVALID_TOKEN,
+                data: null
+            }
+        }
+
+        const allCertifications = await userCertificationModel.find({
+            userId: user.id
+        })
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                certifications: allCertifications
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const UpdateUserCertifications = async (
+    input: Partial<UserCertificationDTO>,
+    certificationId: string,
+    userId: string
+): Promise<ApiMessage> => {
+    try {
+        const user = await userModel.findById(userId)
+        if (!user) {
+            return {
+                success: false,
+                status: 400,
+                message: responseMessage.INVALID_TOKEN,
+                data: null
+            }
+        }
+
+        let userCertification = await userCertificationModel.findById(certificationId)
+        if (!userCertification) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('User Certification'),
+                data: null
+            }
+        }
+        if (user.id != userCertification.userId) {
+            return {
+                success: false,
+                status: 401,
+                message: responseMessage.UNAUTHORIZED,
+                data: null
+            }
+        }
+
+        userCertification = await userCertificationModel.findByIdAndUpdate(certificationId, input, { new: true })
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                certification: userCertification
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const DeleteUserCertification = async (certificationId: string, userId: string): Promise<ApiMessage> => {
+    try {
+        const user = await userModel.findById(userId)
+        if (!user) {
+            return {
+                success: false,
+                status: 400,
+                message: responseMessage.INVALID_TOKEN,
+                data: null
+            }
+        }
+
+        const userCertification = await userCertificationModel.findById(certificationId)
+        if (!userCertification) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('User Achievement'),
+                data: null
+            }
+        }
+        if (user.id != userCertification.userId) {
+            return {
+                success: false,
+                status: 401,
+                message: responseMessage.UNAUTHORIZED,
+                data: null
+            }
+        }
+
+        await userAchievementModel.deleteOne({ _id: certificationId })
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                certification: userCertification
             }
         }
     } catch (error) {

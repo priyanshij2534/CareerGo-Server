@@ -65,6 +65,15 @@ export interface IUserAchievement {
     description: string | null
 }
 
+export interface IUserCertification {
+    userId: mongoose.Schema.Types.ObjectId
+    title: string
+    issuedBy: string
+    startDate: string
+    endDate: string | null
+    expiryDate: string | null
+}
+
 export interface IRefreshToken {
     token: string
 }
