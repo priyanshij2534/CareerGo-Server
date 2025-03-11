@@ -7,11 +7,12 @@ import { emailVerificationTemplate } from '../constants/template/emailVerificati
 import institutionModel from '../model/Institution/institutionModel'
 import userModel from '../model/user/userModel'
 import { sendEmail } from '../service/nodemailerService'
-import { IDecryptedJwt, IInstitution, IUser } from '../types/userTypes'
+import { IDecryptedJwt, IInstitution, IUser, IUserBasicInfo } from '../types/userTypes'
 import { ApiMessage } from '../utils/ApiMessage'
 import { EncryptPassword } from '../utils/helper/asyncHelpers'
 import { GenerateRandomId, GenerateOTP, VerifyToken } from '../utils/helper/syncHelpers'
 import { institutionRegistrationConfirmationTemplate } from '../constants/template/institutionRegistrationSuccesTemplate'
+import userBasicInfoModel from '../model/user/Profile/userBasicInfoModel'
 
 export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<ApiMessage> => {
     const { institutionName, adminName, logo, website, registrationNumber, emailAddress, password, conscent } = input
@@ -33,10 +34,10 @@ export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<
                         data: null
                     }
                 }
-    
+
                 const deleteAdminResult = await userModel.deleteOne({ _id: admin._id })
                 const deleteInstitutionResult = await institutionModel.deleteOne({ _id: institution._id })
-    
+
                 if (deleteAdminResult.deletedCount === 0 && deleteInstitutionResult.deletedCount === 0) {
                     return {
                         success: false,
@@ -102,6 +103,18 @@ export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<
 
         newUser.institution.institutionId = newInstitution.id as mongoose.Schema.Types.ObjectId
         await newUser.save()
+
+        const basicInfoPayload: IUserBasicInfo = {
+            userId: newUser.id as unknown as mongoose.Schema.Types.ObjectId,
+            phone: null,
+            dateOfBirth: null,
+            gender: null,
+            region: null,
+            languages: [],
+            skills: [],
+            socialLinks: []
+        }
+        await userBasicInfoModel.create(basicInfoPayload)
 
         return {
             success: true,

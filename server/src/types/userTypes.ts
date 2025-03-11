@@ -1,5 +1,5 @@
 import { Request } from 'express'
-import { EUserRole } from '../constants/applicationEnums'
+import { EAchievementType, ELanguageExperties, ESocialPlatform, EUserRole } from '../constants/applicationEnums'
 import { JwtPayload } from 'jsonwebtoken'
 import mongoose from 'mongoose'
 
@@ -35,6 +35,34 @@ export interface IInstitution {
     registrationNumber: string | null
     adminId: mongoose.Schema.Types.ObjectId
     consent: boolean
+}
+
+export interface IUserBasicInfo {
+    userId: mongoose.Schema.Types.ObjectId
+    phone: string | null
+    dateOfBirth: Date | null
+    gender: string | null
+    region: string | null
+    languages: {
+        name: string
+        read: ELanguageExperties
+        write: ELanguageExperties
+    }[]
+    skills: string[]
+    socialLinks: {
+        platform: ESocialPlatform
+        url: string
+    }[]
+}
+
+export interface IUserAchievement {
+    userId: mongoose.Schema.Types.ObjectId
+    title: string
+    type: EAchievementType
+    awardedBy: string
+    startDate: string
+    endDate: string | null
+    description: string | null
 }
 
 export interface IRefreshToken {
