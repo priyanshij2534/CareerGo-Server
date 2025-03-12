@@ -33,7 +33,9 @@ export const SelfIdentification = async (accessToken: string): Promise<ApiMessag
             data: {
                 userId: user._id,
                 name: user.name,
-                emailAddress: user.emailAddress
+                emailAddress: user.emailAddress,
+                role: user.role,
+                profileImage: user.profileImage
             }
         }
     } catch (error) {
@@ -533,7 +535,7 @@ export const DeleteUserCertification = async (certificationId: string, userId: s
             }
         }
 
-        await userAchievementModel.deleteOne({ _id: certificationId })
+        await userCertificationModel.deleteOne({ _id: certificationId })
 
         return {
             success: true,
@@ -541,6 +543,40 @@ export const DeleteUserCertification = async (certificationId: string, userId: s
             message: responseMessage.SUCCESS,
             data: {
                 certification: userCertification
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const UpdateUserProfile = async (image: string, userId: string): Promise<ApiMessage> => {
+    try {
+        const user = await userModel.findById(userId)
+        if (!user) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('User'),
+                data: null
+            }
+        }
+
+        user.profileImage = image
+        await user.save()
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                profileImage: image
             }
         }
     } catch (error) {

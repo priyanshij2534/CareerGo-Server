@@ -57,6 +57,7 @@ export const RegisterUser = async (input: UserRegistrationDTO): Promise<ApiMessa
         const payload: IUser = {
             name: name,
             emailAddress: emailAddress,
+            profileImage: null,
             institution: {
                 isAssociated: false,
                 institutionId: null

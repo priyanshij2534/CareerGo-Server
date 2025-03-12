@@ -8,6 +8,7 @@ export interface IUser {
     emailAddress: string
     password: string
     role: EUserRole
+    profileImage: string | null
     accountConfirmation: {
         status: boolean
         token: string

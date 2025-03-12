@@ -57,6 +57,7 @@ export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<
         const userPayload: IUser = {
             name: adminName,
             emailAddress: emailAddress,
+            profileImage: null,
             institution: {
                 isAssociated: true,
                 institutionId: null

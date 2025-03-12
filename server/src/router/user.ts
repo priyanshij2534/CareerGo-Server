@@ -11,7 +11,8 @@ import {
     SelfIdentification,
     UpdateBasicInfo,
     UpdateUserAchievement,
-    UpdateUserCertifications
+    UpdateUserCertifications,
+    UpdateUserProfile
 } from '../controller/user'
 import rateLimit from '../middleware/rateLimit'
 import ApiError from '../utils/ApiError'
@@ -330,6 +331,37 @@ router.delete('/certification/:certificationId', rateLimit, async (req: Request,
         const certificationId = req.params.certificationId
 
         const { success, status, message, data } = await DeleteUserCertification(certificationId, userId)
+        if (!success) {
+            return ApiError(next, null, req, status, message)
+        }
+        return ApiResponse(req, res, status, message, data)
+    } catch (err) {
+        return ApiError(next, err, req, 500)
+    }
+})
+
+/*
+    Route: /api/v1/user/profileImage
+    Method: PUT
+    Desc: Update user profile image
+    Access: Protected
+    Body: profileImage
+*/
+router.put('/profileImage', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { cookies } = req
+        const { accessToken } = cookies as { accessToken: string | undefined }
+        if (!accessToken) {
+            return ApiError(next, null, req, 400, responseMessage.UNAUTHORIZED)
+        }
+        const { userId } = VerifyToken(accessToken, config.ACCESS_TOKEN.SECRET as string) as IDecryptedJwt
+
+        const { profileImage } = req.body as { profileImage: string }
+        if(!profileImage) {
+            return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
+        }
+
+        const { success, status, message, data } = await UpdateUserProfile(profileImage, userId)
         if (!success) {
             return ApiError(next, null, req, status, message)
         }
