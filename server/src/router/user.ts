@@ -3,15 +3,19 @@ import responseMessage from '../constants/responseMessage'
 import {
     CreateUserAchievement,
     CreateUserCertification,
+    CreateUserEducation,
     DeleteUserAchievement,
     DeleteUserCertification,
+    DeleteUserEducation,
     GetAllUserAchievement,
     GetAllUserCertification,
+    GetAllUserEducation,
     GetUserBasicInfo,
     SelfIdentification,
     UpdateBasicInfo,
     UpdateUserAchievement,
     UpdateUserCertifications,
+    UpdateUserEducation,
     UpdateUserProfile
 } from '../controller/user'
 import rateLimit from '../middleware/rateLimit'
@@ -25,6 +29,7 @@ import { VerifyToken } from '../utils/helper/syncHelpers'
 import { validateDTO } from '../utils/validateDto'
 import { UserAchievementDTO } from '../constants/DTO/User/Profile/UserAchievementDTO'
 import { UserCertificationDTO } from '../constants/DTO/User/Profile/UserCertificationDTO'
+import { UserEducationDTO } from '../constants/DTO/User/Profile/UserEducationDTO'
 const router = Router()
 
 /*
@@ -362,6 +367,121 @@ router.put('/profileImage', rateLimit, async (req: Request, res: Response, next:
         }
 
         const { success, status, message, data } = await UpdateUserProfile(profileImage, userId)
+        if (!success) {
+            return ApiError(next, null, req, status, message)
+        }
+        return ApiResponse(req, res, status, message, data)
+    } catch (err) {
+        return ApiError(next, err, req, 500)
+    }
+})
+
+/*
+    Route: /api/v1/user/education
+    Method: POST
+    Desc: Create user education
+    Access: Protected
+    Body: UserEducationDTO
+*/
+router.post('/education', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { cookies } = req
+        const { accessToken } = cookies as { accessToken: string | undefined }
+        if (!accessToken) {
+            return ApiError(next, null, req, 400, responseMessage.UNAUTHORIZED)
+        }
+        const { userId } = VerifyToken(accessToken, config.ACCESS_TOKEN.SECRET as string) as IDecryptedJwt
+
+        const body: object = req.body as object
+
+        const requestValidation = await validateDTO(UserEducationDTO, body)
+        if (!requestValidation.success) {
+            return DtoError(next, req, requestValidation.status, requestValidation.errors)
+        }
+
+        const { success, status, message, data } = await CreateUserEducation(req.body as UserEducationDTO, userId)
+        if (!success) {
+            return ApiError(next, null, req, status, message)
+        }
+        return ApiResponse(req, res, status, message, data)
+    } catch (err) {
+        return ApiError(next, err, req, 500)
+    }
+})
+
+/*
+    Route: /api/v1/user/education
+    Method: GET
+    Desc: Get all user educations
+    Access: Protected
+*/
+router.get('/education', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { cookies } = req
+        const { accessToken } = cookies as { accessToken: string | undefined }
+        if (!accessToken) {
+            return ApiError(next, null, req, 400, responseMessage.UNAUTHORIZED)
+        }
+        const { userId } = VerifyToken(accessToken, config.ACCESS_TOKEN.SECRET as string) as IDecryptedJwt
+
+        const { success, status, message, data } = await GetAllUserEducation(userId)
+        if (!success) {
+            return ApiError(next, null, req, status, message)
+        }
+        return ApiResponse(req, res, status, message, data)
+    } catch (err) {
+        return ApiError(next, err, req, 500)
+    }
+})
+
+/*
+    Route: /api/v1/user/education/:educationId
+    Method: PUT
+    Desc: Update user education
+    Access: Protected
+    Body: Partial<UserCertificationDTO>
+    Paramas: achievementId
+*/
+router.put('/education/:educationId', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { cookies } = req
+        const { accessToken } = cookies as { accessToken: string | undefined }
+        if (!accessToken) {
+            return ApiError(next, null, req, 400, responseMessage.UNAUTHORIZED)
+        }
+        const { userId } = VerifyToken(accessToken, config.ACCESS_TOKEN.SECRET as string) as IDecryptedJwt
+
+        const educationId = req.params.educationId
+
+        const { success, status, message, data } = await UpdateUserEducation(req.body as Partial<UserEducationDTO>, educationId, userId)
+        if (!success) {
+            return ApiError(next, null, req, status, message)
+        }
+        return ApiResponse(req, res, status, message, data)
+    } catch (err) {
+        return ApiError(next, err, req, 500)
+    }
+})
+
+/*
+    Route: /api/v1/user/education/:educationId
+    Method: DELETE
+    Desc: Delete user certification
+    Access: Protected
+    Paramas: achievementId
+*/
+router.delete('/education/:educationId', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { cookies } = req
+        const { accessToken } = cookies as { accessToken: string | undefined }
+        if (!accessToken) {
+            return ApiError(next, null, req, 400, responseMessage.UNAUTHORIZED)
+        }
+        const { userId } = VerifyToken(accessToken, config.ACCESS_TOKEN.SECRET as string) as IDecryptedJwt
+
+        const educationId = req.params.educationId
+
+        const { success, status, message, data } = await DeleteUserEducation(educationId, userId)
         if (!success) {
             return ApiError(next, null, req, status, message)
         }

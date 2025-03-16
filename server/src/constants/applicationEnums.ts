@@ -28,3 +28,14 @@ export enum EAchievementType {
     Academic = 'Academic',
     Professional = 'Professional'
 }
+
+export enum EEducationCategory {
+    Below_10th = '10th and below',
+    Above_10th_And_Below_12th = '1th & 12th',
+    Graduation_And_Above = 'Graduation and above'
+}
+
+export enum EGradeType {
+    CGPA = 'CGPA',
+    PERCENTAGE = 'Percentage'
+}

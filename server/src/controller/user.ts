@@ -1,6 +1,6 @@
 import responseMessage from '../constants/responseMessage'
 import userModel from '../model/user/userModel'
-import { IDecryptedJwt, IUserAchievement, IUserCertification } from '../types/userTypes'
+import { IDecryptedJwt, IUserAchievement, IUserCertification, IUserEducation } from '../types/userTypes'
 import { ApiMessage } from '../utils/ApiMessage'
 import { VerifyToken } from '../utils/helper/syncHelpers'
 import config from '../config/config'
@@ -11,6 +11,9 @@ import userAchievementModel from '../model/user/Profile/userAchievementModel'
 import mongoose from 'mongoose'
 import { UserCertificationDTO } from '../constants/DTO/User/Profile/UserCertificationDTO'
 import userCertificationModel from '../model/user/Profile/userCertificationModel'
+import { UserEducationDTO } from '../constants/DTO/User/Profile/UserEducationDTO'
+import { EEducationCategory } from '../constants/applicationEnums'
+import userEducationModel from '../model/user/Profile/userEducationModel'
 
 export const SelfIdentification = async (accessToken: string): Promise<ApiMessage> => {
     try {
@@ -577,6 +580,227 @@ export const UpdateUserProfile = async (image: string, userId: string): Promise<
             message: responseMessage.SUCCESS,
             data: {
                 profileImage: image
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const CreateUserEducation = async (input: UserEducationDTO, userId: string): Promise<ApiMessage> => {
+    const { institutionName, category, grade, startDate, endDate, standard, board, mediumOfInstruction, stream, major, specialization } = input
+    try {
+        const user = await userModel.findById(userId)
+        if (!user) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('User'),
+                data: null
+            }
+        }
+
+        let payload: IUserEducation
+        let userEducation: IUserEducation
+
+        if (category === EEducationCategory.Above_10th_And_Below_12th || category === EEducationCategory.Below_10th) {
+            payload = {
+                userId: user.id as unknown as mongoose.Schema.Types.ObjectId,
+                institutionName: institutionName,
+                category: category,
+                grade: {
+                    type: grade.type,
+                    value: grade.value
+                },
+                startDate: startDate,
+                endDate: endDate,
+
+                standard: standard ? standard : null,
+                board: board ? board : null,
+                mediumOfInstruction: mediumOfInstruction ? mediumOfInstruction : null,
+                stream: null,
+                major: null,
+                specialization: null
+            }
+
+            userEducation = await userEducationModel.create(payload)
+        } else {
+            payload = {
+                userId: user.id as unknown as mongoose.Schema.Types.ObjectId,
+                institutionName: institutionName,
+                category: category,
+                grade: {
+                    type: grade.type,
+                    value: grade.value
+                },
+                startDate: startDate,
+                endDate: endDate,
+
+                standard: null,
+                board: null,
+                mediumOfInstruction: null,
+
+                stream: stream ? stream : null,
+                major: major ? major : null,
+                specialization: specialization ? specialization : null
+            }
+
+            userEducation = await userEducationModel.create(payload)
+        }
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                userEducation: userEducation
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const GetAllUserEducation = async (userId: string): Promise<ApiMessage> => {
+    try {
+        const user = await userModel.findById(userId)
+        if (!user) {
+            return {
+                success: false,
+                status: 400,
+                message: responseMessage.INVALID_TOKEN,
+                data: null
+            }
+        }
+
+        const allEducation = await userEducationModel.find({
+            userId: user.id
+        })
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                education: allEducation
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const UpdateUserEducation = async (
+    input: Partial<UserEducationDTO>,
+    educationId: string,
+    userId: string
+): Promise<ApiMessage> => {
+    try {
+        const user = await userModel.findById(userId)
+        if (!user) {
+            return {
+                success: false,
+                status: 400,
+                message: responseMessage.INVALID_TOKEN,
+                data: null
+            }
+        }
+
+        let userEducation = await userEducationModel.findById(educationId)
+        if (!userEducation) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('User Certification'),
+                data: null
+            }
+        }
+        if (user.id != userEducation.userId) {
+            return {
+                success: false,
+                status: 401,
+                message: responseMessage.UNAUTHORIZED,
+                data: null
+            }
+        }
+
+        userEducation = await userEducationModel.findByIdAndUpdate(educationId, input, { new: true })
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                education: userEducation
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const DeleteUserEducation = async (educationId: string, userId: string): Promise<ApiMessage> => {
+    try {
+        const user = await userModel.findById(userId)
+        if (!user) {
+            return {
+                success: false,
+                status: 400,
+                message: responseMessage.INVALID_TOKEN,
+                data: null
+            }
+        }
+
+        const userEducation = await userEducationModel.findById(educationId)
+        if (!userEducation) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('User Achievement'),
+                data: null
+            }
+        }
+        if (user.id != userEducation.userId) {
+            return {
+                success: false,
+                status: 401,
+                message: responseMessage.UNAUTHORIZED,
+                data: null
+            }
+        }
+
+        await userEducationModel.deleteOne({ _id: educationId })
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                education: userEducation
             }
         }
     } catch (error) {

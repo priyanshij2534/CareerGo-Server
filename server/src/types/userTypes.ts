@@ -1,5 +1,5 @@
 import { Request } from 'express'
-import { EAchievementType, ELanguageExperties, ESocialPlatform, EUserRole } from '../constants/applicationEnums'
+import { EAchievementType, EEducationCategory, EGradeType, ELanguageExperties, ESocialPlatform, EUserRole } from '../constants/applicationEnums'
 import { JwtPayload } from 'jsonwebtoken'
 import mongoose from 'mongoose'
 
@@ -73,6 +73,28 @@ export interface IUserCertification {
     startDate: string
     endDate: string | null
     expiryDate: string | null
+}
+
+export interface IUserEducation {
+    userId: mongoose.Schema.Types.ObjectId
+    institutionName: string
+    category: EEducationCategory
+    grade: {
+        type: EGradeType
+        value: number
+    }
+    startDate: string 
+    endDate: string | null
+    
+    // 10th and 12th only
+    standard: string | null
+    board: string | null
+    mediumOfInstruction: string | null 
+
+    // College only
+    stream: string | null
+    major: string | null
+    specialization: string | null
 }
 
 export interface IRefreshToken {
