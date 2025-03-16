@@ -9,7 +9,7 @@ import path from 'path'
 // Linking Trace Support
 import * as sourceMapSupport from 'source-map-support'
 import { red, blue, yellow, green, magenta } from 'colorette'
-import { MongoDBTransportInstance } from 'winston-mongodb'
+// import { MongoDBTransportInstance } from 'winston-mongodb'
 sourceMapSupport.install()
 
 const colorizeLevel = (level: string) => {
@@ -93,21 +93,25 @@ const FileTransport = (): Array<FileTransportInstance> => {
     ]
 }
 
-const MongoDBTransport = (): Array<MongoDBTransportInstance> => {
-    return [
-        new transports.MongoDB({
-            level: 'info',
-            db: config.DATABASE_URL as string,
-            metaKey: 'meta',
-            expireAfterSeconds: 3600 * 24 * 30,
-            collection: 'application-logs'
-        })
-    ]
-}
+// const MongoDBTransport = (): Array<MongoDBTransportInstance> => {
+//     return [
+//         new transports.MongoDB({
+//             level: 'info',
+//             db: config.DATABASE_URL as string,
+//             metaKey: 'meta',
+//             expireAfterSeconds: 3600 * 24 * 30,
+//             collection: 'application-logs'
+//         })
+//     ]
+// }
 
 export default createLogger({
     defaultMeta: {
         meta: {}
     },
-    transports: [...FileTransport(),...MongoDBTransport(), ...consoleTransport()]
+    transports: [
+        ...FileTransport(),
+        // ...MongoDBTransport(),
+        ...consoleTransport()
+    ]
 })
