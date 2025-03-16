@@ -708,11 +708,7 @@ export const GetAllUserEducation = async (userId: string): Promise<ApiMessage> =
     }
 }
 
-export const UpdateUserEducation = async (
-    input: Partial<UserEducationDTO>,
-    educationId: string,
-    userId: string
-): Promise<ApiMessage> => {
+export const UpdateUserEducation = async (input: Partial<UserEducationDTO>, educationId: string, userId: string): Promise<ApiMessage> => {
     try {
         const user = await userModel.findById(userId)
         if (!user) {

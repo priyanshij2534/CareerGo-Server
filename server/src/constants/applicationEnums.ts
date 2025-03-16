@@ -31,7 +31,7 @@ export enum EAchievementType {
 
 export enum EEducationCategory {
     Below_10th = '10th and below',
-    Above_10th_And_Below_12th = '1th & 12th',
+    Above_10th_And_Below_12th = '11th & 12th',
     Graduation_And_Above = 'Graduation and above'
 }
 
