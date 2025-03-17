@@ -34,6 +34,10 @@ const institutionSchema = new mongoose.Schema<IInstitution>(
         consent: {
             type: Boolean,
             required: true
+        },
+        admission: {
+            type: Boolean,
+            required: false
         }
     },
     { timestamps: true }

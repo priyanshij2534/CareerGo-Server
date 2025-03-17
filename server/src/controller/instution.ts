@@ -13,6 +13,10 @@ import { EncryptPassword } from '../utils/helper/asyncHelpers'
 import { GenerateRandomId, GenerateOTP, VerifyToken } from '../utils/helper/syncHelpers'
 import { institutionRegistrationConfirmationTemplate } from '../constants/template/institutionRegistrationSuccesTemplate'
 import userBasicInfoModel from '../model/user/Profile/userBasicInfoModel'
+import courseCategoryModel from '../model/Institution/courseCategoryModel'
+import { ICourseCategory } from '../types/institutionTypes'
+import { CourseCategoryDTO } from '../constants/DTO/Institution/CourseCategory'
+import { UpdateInstitutionDetailsDTO } from '../constants/DTO/Institution/UpdateInstitutionDetailsDTO'
 
 export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<ApiMessage> => {
     const { institutionName, adminName, logo, website, registrationNumber, emailAddress, password, conscent } = input
@@ -94,7 +98,8 @@ export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<
             website: website ? website : null,
             registrationNumber: registrationNumber,
             adminId: newUser.id as mongoose.Schema.Types.ObjectId,
-            consent: conscent
+            consent: conscent,
+            admission: null
         }
 
         const newInstitution = await institutionModel.create(institutionPayload)
@@ -116,6 +121,12 @@ export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<
             socialLinks: []
         }
         await userBasicInfoModel.create(basicInfoPayload)
+
+        const courseCategoryPayload: ICourseCategory = {
+            institutionId: newInstitution.id as unknown as mongoose.Schema.Types.ObjectId,
+            courseCategory: []
+        }
+        await courseCategoryModel.create(courseCategoryPayload)
 
         return {
             success: true,
@@ -203,40 +214,8 @@ export const GetAllInstitutions = async (accessToken: string, page: number, limi
     }
 }
 
-export const GetInstitutionDetails = async (accessToken: string, institutionId: string): Promise<ApiMessage> => {
+export const GetInstitutionDetails = async (institutionId: string): Promise<ApiMessage> => {
     try {
-        const { userId } = VerifyToken(accessToken, config.ACCESS_TOKEN.SECRET as string) as IDecryptedJwt
-        const user = await userModel.findById(userId)
-        if (!user) {
-            return {
-                success: false,
-                status: 401,
-                message: responseMessage.UNAUTHORIZED,
-                data: null
-            }
-        } else if (!user.institution.isAssociated) {
-            return {
-                success: false,
-                status: 401,
-                message: responseMessage.UNAUTHORIZED,
-                data: null
-            }
-        } else if (user.institution.institutionId !== (institutionId as unknown)) {
-            return {
-                success: false,
-                status: 401,
-                message: responseMessage.UNAUTHORIZED,
-                data: null
-            }
-        } else if (user.role === EUserRole.USER) {
-            return {
-                success: false,
-                status: 401,
-                message: responseMessage.UNAUTHORIZED,
-                data: null
-            }
-        }
-
         const institution = await institutionModel.findById(institutionId)
         if (!institution) {
             return {
@@ -247,14 +226,11 @@ export const GetInstitutionDetails = async (accessToken: string, institutionId: 
             }
         }
 
-        const institutionAdmin = await userModel.findOne({
-            'organisation.organisationId': institutionId,
-            role: EUserRole.Institution_ADMIN
-        })
-        if (!institutionAdmin) {
+        const admin = await userModel.findById(institution.adminId)
+        if (!admin) {
             return {
                 success: false,
-                status: 404,
+                status: 401,
                 message: responseMessage.NOT_FOUND('Institution admin'),
                 data: null
             }
@@ -265,8 +241,234 @@ export const GetInstitutionDetails = async (accessToken: string, institutionId: 
             status: 200,
             message: responseMessage.SUCCESS,
             data: {
-                institution: institution,
-                institutionAdmin: institutionAdmin
+                institution: {
+                    name: institution.institutionName,
+                    url: institution.website,
+                    logo: institution.logo,
+                    admission: institution.admission,
+                    adminName: admin.name
+                }
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const UpdateInstitutionLogo = async (logo: string, institutionId: string): Promise<ApiMessage> => {
+    try {
+        const institution = await institutionModel.findById(institutionId)
+        if (!institution) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Institution'),
+                data: null
+            }
+        }
+
+        institution.logo = logo
+        await institution.save()
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: null
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const UpdateInstitutionDetails = async (input: UpdateInstitutionDetailsDTO, institutionId: string): Promise<ApiMessage> => {
+    const {admission, website} = input
+    try {
+        const institution = await institutionModel.findById(institutionId)
+        if (!institution) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Institution'),
+                data: null
+            }
+        }
+
+        let update = false
+
+        if(website) {
+            institution.website = website
+            update = true
+        }
+
+        if(admission !== undefined) {
+            institution.admission = admission
+            update = true
+        }
+
+        if(update) {
+            await institution.save()
+            return {
+                success: true,
+                status: 200,
+                message: responseMessage.SUCCESS,
+                data: null
+            }
+        }
+
+        return {
+            success: false,
+            status: 400,
+            message: responseMessage.INVALID_REQUEST,
+            data: null
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const CreateNewCourseCategory = async (input: CourseCategoryDTO, institutionId: string): Promise<ApiMessage> => {
+    const { courseCategory } = input
+    try {
+        const institution = await institutionModel.findById(institutionId)
+        if (!institution) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Institution'),
+                data: null
+            }
+        }
+
+        const institutionCourseCategory = await courseCategoryModel.findOne({
+            institutionId: institutionId
+        })
+
+        institutionCourseCategory?.courseCategory.push(courseCategory)
+        await institutionCourseCategory?.save()
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: null
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const DeleteCourseCategory = async (input: CourseCategoryDTO, institutionId: string): Promise<ApiMessage> => {
+    const { courseCategory } = input
+    try {
+        const institution = await institutionModel.findById(institutionId)
+        if (!institution) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Institution'),
+                data: null
+            }
+        }
+
+        const institutionCourseCategory = await courseCategoryModel.findOne({
+            institutionId: institutionId
+        })
+
+        if (!institutionCourseCategory) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Course Category'),
+                data: null
+            }
+        }
+
+        const categoryIndex = institutionCourseCategory.courseCategory.indexOf(courseCategory)
+        if (categoryIndex === -1) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Course Category'),
+                data: null
+            }
+        }
+
+        institutionCourseCategory.courseCategory.splice(categoryIndex, 1)
+        await institutionCourseCategory.save()
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: null
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const GetCourseCategory = async (institutionId: string): Promise<ApiMessage> => {
+    try {
+        const institution = await institutionModel.findById(institutionId)
+        if (!institution) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Institution'),
+                data: null
+            }
+        }
+
+        const institutionCourseCategory = await courseCategoryModel.findOne({
+            institutionId: institutionId
+        })
+
+        if (!institutionCourseCategory) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Course Category'),
+                data: null
+            }
+        }
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                courseCategory: institutionCourseCategory
             }
         }
     } catch (error) {

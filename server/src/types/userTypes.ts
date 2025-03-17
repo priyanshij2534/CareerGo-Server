@@ -36,6 +36,7 @@ export interface IInstitution {
     registrationNumber: string | null
     adminId: mongoose.Schema.Types.ObjectId
     consent: boolean
+    admission: boolean | null 
 }
 
 export interface IUserBasicInfo {
@@ -109,4 +110,5 @@ export interface IDecryptedJwt extends JwtPayload {
     userId: string
     role: string
     name: string
+    institutionId: string
 }

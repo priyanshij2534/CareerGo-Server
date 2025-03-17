@@ -248,7 +248,8 @@ export const LoginUser = async (input: UserLoginDTO): Promise<ApiMessage> => {
             {
                 userId: user.id as string,
                 name: user.name,
-                role: user.role
+                role: user.role,
+                institutionId: user.institution.institutionId
             },
             config.ACCESS_TOKEN.SECRET as string,
             config.ACCESS_TOKEN.EXPIRY
