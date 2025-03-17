@@ -6,19 +6,25 @@ import DtoError from '../utils/DtoError'
 import rateLimit from '../middleware/rateLimit'
 import { CreateInstitutionDTO } from '../constants/DTO/Institution/CreateInstitutionDTO'
 import {
+    CreateNewCourse,
     CreateNewCourseCategory,
+    DeleteCourse,
     DeleteCourseCategory,
+    GetAllCourse,
     GetAllInstitutions,
     GetCourseCategory,
+    GetCourseDetail,
     GetInstitutionDetails,
     RegisterInstitution,
+    UpdateCourse,
     UpdateInstitutionDetails,
     UpdateInstitutionLogo
 } from '../controller/instution'
 import authentication from '../middleware/authentication'
 import responseMessage from '../constants/responseMessage'
 import { UpdateInstitutionDetailsDTO } from '../constants/DTO/Institution/UpdateInstitutionDetailsDTO'
-import { CourseCategoryDTO } from '../constants/DTO/Institution/CourseCategory'
+import { CourseCategoryDTO } from '../constants/DTO/Institution/CourseCategoryDTO'
+import { CourseDTO } from '../constants/DTO/Institution/CourseDTO'
 const router = Router()
 
 /*
@@ -235,6 +241,156 @@ router.delete('/courseCategory/:institutionId', rateLimit, async (req: Request, 
         }
 
         const { success, status, message, data } = await DeleteCourseCategory(req.body as CourseCategoryDTO, institutionId)
+        if (!success) {
+            return ApiError(next, null, req, status, message)
+        }
+        return ApiResponse(req, res, status, message, data)
+    } catch (err) {
+        return ApiError(next, err, req, 500)
+    }
+})
+
+/*
+    Route: /api/v1/institution/course/:institutionId
+    Method: POST
+    Desc: Create a new institution course
+    Access: Public
+    Body: CourseDTO
+    Path variables: institutionId
+*/
+router.post('/course/:institutionId', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const institutionId: string = req.params.institutionId
+        if (!institutionId) {
+            return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
+        }
+
+        const body: object = req.body as object
+
+        const requestValidation = await validateDTO(CourseDTO, body)
+        if (!requestValidation.success) {
+            return DtoError(next, req, requestValidation.status, requestValidation.errors)
+        }
+
+        const { success, status, message, data } = await CreateNewCourse(req.body as CourseDTO, institutionId)
+        if (!success) {
+            return ApiError(next, null, req, status, message)
+        }
+        return ApiResponse(req, res, status, message, data)
+    } catch (err) {
+        return ApiError(next, err, req, 500)
+    }
+})
+
+/*
+    Route: /api/v1/institution/course/all/:institutionId
+    Method: GET
+    Desc: Get all institution course
+    Access: Public
+    Path variables: institutionId
+    Query: category, search
+*/
+router.get('/course/all/:institutionId', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const institutionId: string = req.params.institutionId
+        if (!institutionId) {
+            return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
+        }
+
+        const category: string[] = req.query.category ? (req.query.category as string).split(',') : [];
+        const search: string = req.query.search as string || '';
+
+        const { success, status, message, data } = await GetAllCourse(institutionId, category, search)
+        if (!success) {
+            return ApiError(next, null, req, status, message)
+        }
+        return ApiResponse(req, res, status, message, data)
+    } catch (err) {
+        return ApiError(next, err, req, 500)
+    }
+})
+
+/*
+    Route: /api/v1/institution/course/detail/:institutionId
+    Method: GET
+    Desc: Get institution course details
+    Access: Public
+    Path variables: institutionId
+    Query Parameter: courseId
+*/
+router.get('/course/detail/:institutionId/:courseId', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const institutionId: string = req.params.institutionId
+        if (!institutionId) {
+            return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
+        }
+
+        const courseId: string = req.query.courseId as string
+        if (!courseId) {
+            return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
+        }
+
+        const { success, status, message, data } = await GetCourseDetail(institutionId, courseId)
+        if (!success) {
+            return ApiError(next, null, req, status, message)
+        }
+        return ApiResponse(req, res, status, message, data)
+    } catch (err) {
+        return ApiError(next, err, req, 500)
+    }
+})
+
+/*
+    Route: /api/v1/institution/course/:institutionId
+    Method: POST
+    Desc: Update an institution course
+    Access: Public
+    Path variables: institutionId
+    Query Parameter: courseId
+*/
+router.put('/course/:institutionId', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const institutionId: string = req.params.institutionId
+        if (!institutionId) {
+            return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
+        }
+
+        const courseId: string = req.query.courseId as string
+        if (!courseId) {
+            return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
+        }
+
+        const { success, status, message, data } = await UpdateCourse(req.body as Partial<CourseDTO>, institutionId, courseId)
+        if (!success) {
+            return ApiError(next, null, req, status, message)
+        }
+        return ApiResponse(req, res, status, message, data)
+    } catch (err) {
+        return ApiError(next, err, req, 500)
+    }
+})
+
+/*
+    Route: /api/v1/institution/course/:institutionId
+    Method: Delete
+    Desc: Delete an institution course
+    Access: Public
+    Path variables: institutionId
+    Query Parameter: courseId
+*/
+router.delete('/course/:institutionId', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const institutionId: string = req.params.institutionId
+        if (!institutionId) {
+            return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
+        }
+
+        const courseId: string = req.query.courseId as string
+        if (!courseId) {
+            return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
+        }
+
+        const { success, status, message, data } = await DeleteCourse(institutionId, courseId)
         if (!success) {
             return ApiError(next, null, req, status, message)
         }

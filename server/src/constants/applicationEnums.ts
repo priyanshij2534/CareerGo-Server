@@ -39,3 +39,8 @@ export enum EGradeType {
     CGPA = 'CGPA',
     PERCENTAGE = 'Percentage'
 }
+
+export enum ECourseMode {
+    OFFLINE = 'Offline',
+    ONLINE = 'Online'
+}

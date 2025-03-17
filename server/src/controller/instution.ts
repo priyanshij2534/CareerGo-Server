@@ -14,9 +14,11 @@ import { GenerateRandomId, GenerateOTP, VerifyToken } from '../utils/helper/sync
 import { institutionRegistrationConfirmationTemplate } from '../constants/template/institutionRegistrationSuccesTemplate'
 import userBasicInfoModel from '../model/user/Profile/userBasicInfoModel'
 import courseCategoryModel from '../model/Institution/courseCategoryModel'
-import { ICourseCategory } from '../types/institutionTypes'
-import { CourseCategoryDTO } from '../constants/DTO/Institution/CourseCategory'
+import { ICourse, ICourseCategory } from '../types/institutionTypes'
+import { CourseCategoryDTO } from '../constants/DTO/Institution/CourseCategoryDTO'
 import { UpdateInstitutionDetailsDTO } from '../constants/DTO/Institution/UpdateInstitutionDetailsDTO'
+import { CourseDTO } from '../constants/DTO/Institution/CourseDTO'
+import courseModel from '../model/Institution/courseModel'
 
 export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<ApiMessage> => {
     const { institutionName, adminName, logo, website, registrationNumber, emailAddress, password, conscent } = input
@@ -294,7 +296,7 @@ export const UpdateInstitutionLogo = async (logo: string, institutionId: string)
 }
 
 export const UpdateInstitutionDetails = async (input: UpdateInstitutionDetailsDTO, institutionId: string): Promise<ApiMessage> => {
-    const {admission, website} = input
+    const { admission, website } = input
     try {
         const institution = await institutionModel.findById(institutionId)
         if (!institution) {
@@ -308,17 +310,17 @@ export const UpdateInstitutionDetails = async (input: UpdateInstitutionDetailsDT
 
         let update = false
 
-        if(website) {
+        if (website) {
             institution.website = website
             update = true
         }
 
-        if(admission !== undefined) {
+        if (admission !== undefined) {
             institution.admission = admission
             update = true
         }
 
-        if(update) {
+        if (update) {
             await institution.save()
             return {
                 success: true,
@@ -418,6 +420,10 @@ export const DeleteCourseCategory = async (input: CourseCategoryDTO, institution
             }
         }
 
+        await courseModel.deleteMany({
+            category: courseCategory
+        })
+
         institutionCourseCategory.courseCategory.splice(categoryIndex, 1)
         await institutionCourseCategory.save()
 
@@ -469,6 +475,246 @@ export const GetCourseCategory = async (institutionId: string): Promise<ApiMessa
             message: responseMessage.SUCCESS,
             data: {
                 courseCategory: institutionCourseCategory
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const CreateNewCourse = async (input: CourseDTO, institutionId: string): Promise<ApiMessage> => {
+    const { courseName, category, duration, eligibility, mode, fees, syllabus, admissionProcess, email, phone, website, brochure } = input
+    try {
+        const institution = await institutionModel.findById(institutionId)
+        if (!institution) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Institution'),
+                data: null
+            }
+        }
+
+        const institutionCourseCategory = await courseCategoryModel.findOne({ institutionId: institutionId })
+        if (!institutionCourseCategory) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Course Category'),
+                data: null
+            }
+        }
+
+        const index = institutionCourseCategory.courseCategory.findIndex((categoryItem) => categoryItem === category)
+        if (index === -1) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Course Category'),
+                data: null
+            }
+        }
+
+        const coursePayload: ICourse = {
+            institutionId: institutionId as unknown as mongoose.Schema.Types.ObjectId,
+            courseName: courseName,
+            category: category,
+            duration: duration,
+            eligibility: eligibility,
+            mode: mode,
+            fees: fees,
+            syllabus: syllabus,
+            admissionProcess: admissionProcess,
+            email: email,
+            phone: phone,
+            website: website,
+            brochure: brochure ? brochure : null
+        }
+
+        const course = await courseModel.create(coursePayload)
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                course: course
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const GetAllCourse = async (institutionId: string, category?: string[], search?: string): Promise<ApiMessage> => {
+    try {
+        const institution = await institutionModel.findById(institutionId)
+        if (!institution) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Institution'),
+                data: null
+            }
+        }
+
+        // Ensure category is an array and search is a string
+        const categoryFilter = category && category.length > 0 ? { category: { $in: category } } : {}
+        const searchFilter = search ? { courseName: { $regex: search, $options: 'i' } } : {}
+
+        const courses = await courseModel
+            .find({
+                institutionId,
+                ...categoryFilter,
+                ...searchFilter
+            })
+            .select('courseName category duration eligibility mode')
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: { courses }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const GetCourseDetail = async (institutionId: string, courseId: string): Promise<ApiMessage> => {
+    try {
+        const institution = await institutionModel.findById(institutionId)
+        if (!institution) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Institution'),
+                data: null
+            }
+        }
+
+        const course = await courseModel.findById(courseId)
+        if (!course) {
+            return {
+                success: false,
+                status: 401,
+                message: responseMessage.NOT_FOUND('Course'),
+                data: null
+            }
+        }
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                course: course
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const UpdateCourse = async (input: Partial<CourseDTO>, institutionId: string, courseId: string): Promise<ApiMessage> => {
+    try {
+        const institution = await institutionModel.findById(institutionId)
+        if (!institution) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Institution'),
+                data: null
+            }
+        }
+
+        let course = await courseModel.findById(courseId)
+        if (!course) {
+            return {
+                success: false,
+                status: 401,
+                message: responseMessage.NOT_FOUND('Course'),
+                data: null
+            }
+        }
+
+        course = await courseModel.findByIdAndUpdate(courseId, input, { new: true })
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                course: course
+            }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}
+
+export const DeleteCourse = async (institutionId: string, courseId: string): Promise<ApiMessage> => {
+    try {
+        const institution = await institutionModel.findById(institutionId)
+        if (!institution) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Institution'),
+                data: null
+            }
+        }
+
+        const course = await courseModel.findById(courseId)
+        if (!course) {
+            return {
+                success: false,
+                status: 401,
+                message: responseMessage.NOT_FOUND('Course'),
+                data: null
+            }
+        }
+
+        await course.deleteOne({
+            _id: courseId
+        })
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                course: course
             }
         }
     } catch (error) {
