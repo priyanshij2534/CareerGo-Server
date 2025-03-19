@@ -224,7 +224,7 @@ router.get('/courseCategory/:institutionId', authentication, rateLimit, async (r
     Method: DELETE
     Desc: Delete new institution course category
     Access: Protected
-    Body: CourseCategoryDTO
+    Body: courseName
 */
 router.delete('/courseCategory/:institutionId', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -233,14 +233,12 @@ router.delete('/courseCategory/:institutionId', rateLimit, async (req: Request, 
             return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
         }
 
-        const body: object = req.body as object
-
-        const requestValidation = await validateDTO(CourseCategoryDTO, body)
-        if (!requestValidation.success) {
-            return DtoError(next, req, requestValidation.status, requestValidation.errors)
+        const categoryName = req.query.categoryName as string
+        if(!categoryName) {
+            return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
         }
 
-        const { success, status, message, data } = await DeleteCourseCategory(req.body as CourseCategoryDTO, institutionId)
+        const { success, status, message, data } = await DeleteCourseCategory(categoryName, institutionId)
         if (!success) {
             return ApiError(next, null, req, status, message)
         }
@@ -318,7 +316,7 @@ router.get('/course/all/:institutionId', rateLimit, async (req: Request, res: Re
     Path variables: institutionId
     Query Parameter: courseId
 */
-router.get('/course/detail/:institutionId/:courseId', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/course/detail/:institutionId', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const institutionId: string = req.params.institutionId
         if (!institutionId) {

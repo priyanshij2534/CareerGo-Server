@@ -42,5 +42,6 @@ export enum EGradeType {
 
 export enum ECourseMode {
     OFFLINE = 'Offline',
-    ONLINE = 'Online'
+    ONLINE = 'Online',
+    HYBRID= 'Hybrid'
 }

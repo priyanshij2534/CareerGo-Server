@@ -384,8 +384,7 @@ export const CreateNewCourseCategory = async (input: CourseCategoryDTO, institut
     }
 }
 
-export const DeleteCourseCategory = async (input: CourseCategoryDTO, institutionId: string): Promise<ApiMessage> => {
-    const { courseCategory } = input
+export const DeleteCourseCategory = async (categoryName: string, institutionId: string): Promise<ApiMessage> => {
     try {
         const institution = await institutionModel.findById(institutionId)
         if (!institution) {
@@ -410,7 +409,7 @@ export const DeleteCourseCategory = async (input: CourseCategoryDTO, institution
             }
         }
 
-        const categoryIndex = institutionCourseCategory.courseCategory.indexOf(courseCategory)
+        const categoryIndex = institutionCourseCategory.courseCategory.indexOf(categoryName)
         if (categoryIndex === -1) {
             return {
                 success: false,
@@ -421,7 +420,7 @@ export const DeleteCourseCategory = async (input: CourseCategoryDTO, institution
         }
 
         await courseModel.deleteMany({
-            category: courseCategory
+            category: categoryName
         })
 
         institutionCourseCategory.courseCategory.splice(categoryIndex, 1)

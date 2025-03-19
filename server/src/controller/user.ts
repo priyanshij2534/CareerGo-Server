@@ -12,7 +12,7 @@ import mongoose from 'mongoose'
 import { UserCertificationDTO } from '../constants/DTO/User/Profile/UserCertificationDTO'
 import userCertificationModel from '../model/user/Profile/userCertificationModel'
 import { UserEducationDTO } from '../constants/DTO/User/Profile/UserEducationDTO'
-import { EEducationCategory } from '../constants/applicationEnums'
+import { EEducationCategory, EUserRole } from '../constants/applicationEnums'
 import userEducationModel from '../model/user/Profile/userEducationModel'
 
 export const SelfIdentification = async (accessToken: string): Promise<ApiMessage> => {
@@ -29,17 +29,33 @@ export const SelfIdentification = async (accessToken: string): Promise<ApiMessag
             }
         }
 
-        return {
-            success: true,
-            status: 200,
-            message: responseMessage.SUCCESS,
-            data: {
+        let response = {}
+
+        if(user.role === EUserRole.Institution_ADMIN) {
+            response = {
                 userId: user._id,
                 name: user.name,
                 emailAddress: user.emailAddress,
                 role: user.role,
-                profileImage: user.profileImage
+                profileImage: user.profileImage,
+                institutionId: user.institution.institutionId
             }
+        } else {
+            response = {
+                userId: user._id,
+                name: user.name,
+                emailAddress: user.emailAddress,
+                role: user.role,
+                profileImage: user.profileImage,
+                institutionId: null
+            }
+        }
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: response
         }
     } catch (error) {
         const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
