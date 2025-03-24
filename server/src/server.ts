@@ -1,6 +1,6 @@
 import app from './app'
 import config from './config/config'
-import { DURATION, initRateLimiter, POINTS } from './config/rateLimiter';
+import { DURATION, initRateLimiter, POINTS } from './config/rateLimiter'
 import databaseService from './service/databaseService'
 import logger from './utils/logger'
 

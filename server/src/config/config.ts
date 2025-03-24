@@ -30,5 +30,7 @@ export default {
     REFRESH_TOKEN: {
         SECRET: process.env.REFRESH_TOKEN_SECRET,
         EXPIRY: 60 * 60 * 24
-    }
+    },
+
+    OPENAI_API_LINK: process.env.OPEN_AI_API_LINK
 }

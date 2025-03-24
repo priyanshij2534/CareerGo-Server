@@ -45,3 +45,9 @@ export enum ECourseMode {
     ONLINE = 'Online',
     HYBRID= 'Hybrid'
 }
+
+export enum EFocus {
+    EDUCATION = 'Education',
+    ACTIVITIES = 'Activities',
+    BOTH = 'Both Education And Activities'
+}
