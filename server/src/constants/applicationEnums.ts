@@ -46,8 +46,31 @@ export enum ECourseMode {
     HYBRID= 'Hybrid'
 }
 
-export enum EFocus {
-    EDUCATION = 'Education',
-    ACTIVITIES = 'Activities',
-    BOTH = 'Both Education And Activities'
+export enum EConsideration {
+    PERSONAL = 'Personal',
+    PROFESSIONAL = 'Professional',
+    BOTH = 'Both Professional And Personal'
+}
+
+export enum EEducationLevel {
+    UG = 'Undergraduate',
+    PG = 'Postgraduate',
+}
+
+export enum EDegreeCategory {
+    ENGINEERING_TECHNOLOGY = 'Engineering & Technology',
+    MANAGEMENT_BUSINESS = 'Management & Business',
+    MEDICAL_PHARMACY = 'Medical & Pharmacy',
+    SCIENCE_RESEARCH = 'Science & Research',
+    ARCHITECTURE_DESIGN = 'Architecture & Design'
+}
+
+export enum EExam {
+    JEE_MAINS = 'JEE Mains',
+    JEE_ADVANCE = 'JEE Advance',
+    VITEEE = 'VITEEE',
+    BITSAT = 'BITSAT',
+    NEET = 'NEET',
+    GATE = 'GATE',
+    IIT_JAM = 'IIT JAM'
 }

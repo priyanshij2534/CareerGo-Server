@@ -8,15 +8,19 @@ import config from '../config/config'
 import { VerifyToken } from '../utils/helper/syncHelpers'
 import { IDecryptedJwt } from '../types/userTypes'
 import { GetAllCourseCategory, GetRecommendations } from '../controller/recommendations'
+import DtoError from '../utils/DtoError'
+import { validateDTO } from '../utils/validateDto'
+import { RecommendationsDTO } from '../constants/DTO/Recommendations/RecommendationsDTO'
 const router = Router()
 
 /*
     Route: /api/v1/recommendations
-    Method: GET
+    Method: POST
     Desc: Get institution recommendations
     Access: Protected
+    Body: RecommendationsDTO
 */
-router.get('/', authentication, rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', authentication, rateLimit, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { cookies } = req
         const { accessToken } = cookies as { accessToken: string | undefined }
@@ -24,6 +28,13 @@ router.get('/', authentication, rateLimit, async (req: Request, res: Response, n
             return ApiError(next, null, req, 400, responseMessage.UNAUTHORIZED)
         }
         const { userId } = VerifyToken(accessToken, config.ACCESS_TOKEN.SECRET as string) as IDecryptedJwt
+
+        const body: object = req.body as object
+
+        const requestValidation = await validateDTO(RecommendationsDTO, body)
+        if (!requestValidation.success) {
+            return DtoError(next, req, requestValidation.status, requestValidation.errors)
+        }
 
         const { success, status, message, data } = await GetRecommendations(userId)
         if (!success) {
