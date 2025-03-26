@@ -726,3 +726,36 @@ export const DeleteCourse = async (institutionId: string, courseId: string): Pro
         }
     }
 }
+
+export const GetAllInstitutionList = async (page: number, limit: number, search: string | null): Promise<ApiMessage> => {
+    const skip = (page - 1) * limit
+
+    try {
+        const query = {}
+
+        if (search) {
+            const searchQuery = {
+                $or: [{ name: { $regex: search, $options: 'i' } }, { emailAddress: { $regex: search, $options: 'i' } }]
+            }
+            Object.assign(query, searchQuery)
+        }
+
+        const institutionList = await institutionModel.find(query).select('institutionName _id').skip(skip).limit(limit)
+        const institutionCount = await institutionModel.countDocuments(query)
+        
+        return {
+            success: true,
+            status: 200,
+            message: 'Institutiom list fetched',
+            data: { institutionList: institutionList, page: page, limit: limit, total: institutionCount }
+        }
+    } catch (error) {
+        const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errMessage,
+            data: null
+        }
+    }
+}

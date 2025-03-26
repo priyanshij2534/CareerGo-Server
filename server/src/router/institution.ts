@@ -11,6 +11,7 @@ import {
     DeleteCourse,
     DeleteCourseCategory,
     GetAllCourse,
+    GetAllInstitutionList,
     GetAllInstitutions,
     GetCourseCategory,
     GetCourseDetail,
@@ -389,6 +390,29 @@ router.delete('/course/:institutionId', rateLimit, async (req: Request, res: Res
         }
 
         const { success, status, message, data } = await DeleteCourse(institutionId, courseId)
+        if (!success) {
+            return ApiError(next, null, req, status, message)
+        }
+        return ApiResponse(req, res, status, message, data)
+    } catch (err) {
+        return ApiError(next, err, req, 500)
+    }
+})
+
+/*
+    Route: /api/v1/institution/getAllInstitutionList
+    Method: GET
+    Desc: Get all institutions list for dropdown
+    Access: Protected
+    Query: page, limit, search
+*/
+router.get('/getAllInstitutionList', authentication, rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const page: number = req.query.page ? Number(req.query.page) : 1
+        const limit: number = req.query.limit ? Number(req.query.limit) : 10
+        const search: string = req.query.search as string
+
+        const { success, status, message, data } = await GetAllInstitutionList(page, limit, search)
         if (!success) {
             return ApiError(next, null, req, status, message)
         }
