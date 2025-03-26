@@ -8,6 +8,7 @@ import userModel from '../model/user/userModel'
 import counsellingModel from '../model/Counselling/counsellingModel'
 import { ApprovalDTO } from '../constants/DTO/Counselling/ApprovalDTO'
 import { ECounsellingStatus } from '../constants/applicationEnums'
+import { RescheduleCounsellingDTO } from '../constants/DTO/Counselling/RescheduleDTO'
 
 export const BookNewCounsellingMeeting = async (input: CounsellingDTO, userId: string): Promise<ApiMessage> => {
     const { date, time, institutionId, purpose } = input
@@ -115,36 +116,6 @@ export const ApproveCounsellingMeeting = async (input: ApprovalDTO, counsellingI
     }
 }
 
-// export const GetAllCounsellingMeeting = async (userId?: string, institutionId?: string, status?: ECounsellingStatus): Promise<ApiMessage> => {
-//     try {
-//         const query = {}
-
-//         if (userId) Object.assign(query, userId)
-//         if (institutionId) Object.assign(query, institutionId)
-//         if (status) Object.assign(query, status)
-
-//         const meetings = await counsellingModel
-//             .find(query)
-//             .populate({ path: 'userId', select: '_id name' })
-//             .populate({ path: 'institutionId', select: '_id institutionName' })
-
-//         return {
-//             success: true,
-//             status: 200,
-//             message: responseMessage.SUCCESS,
-//             data: meetings
-//         }
-//     } catch (error) {
-//         const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
-//         return {
-//             success: false,
-//             status: 500,
-//             message: errorMessage,
-//             data: null
-//         }
-//     }
-// }
-
 export const GetAllCounsellingMeeting = async (userId?: string, institutionId?: string, status?: ECounsellingStatus): Promise<ApiMessage> => {
     try {
         const query: Record<string, unknown> = {}
@@ -163,6 +134,124 @@ export const GetAllCounsellingMeeting = async (userId?: string, institutionId?: 
             status: 200,
             message: responseMessage.SUCCESS,
             data: meetings
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errorMessage,
+            data: null
+        }
+    }
+}
+
+export const CancelCounsellingMeeting = async (userId: string, counsellingMeetingId: string): Promise<ApiMessage> => {
+    try {
+        const user = await userModel.findById(userId)
+        if (!user) {
+            return {
+                success: false,
+                status: 401,
+                message: responseMessage.UNAUTHORIZED,
+                data: null
+            }
+        }
+
+        const counselling = await counsellingModel.findById(counsellingMeetingId)
+        if (!counselling) {
+            return {
+                success: false,
+                status: 400,
+                message: responseMessage.INVALID_REQUEST,
+                data: null
+            }
+        }
+
+        if (user._id !== counselling._id) {
+            return {
+                success: false,
+                status: 401,
+                message: responseMessage.UNAUTHORIZED,
+                data: null
+            }
+        }
+
+        await counselling.deleteOne({
+            _id: counsellingMeetingId
+        })
+
+        return {
+            success: false,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: null
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errorMessage,
+            data: null
+        }
+    }
+}
+
+export const RescheduleCounsellingMeeting = async (meetingId: string, userId: string, input: RescheduleCounsellingDTO): Promise<ApiMessage> => {
+    const { newDate, newTime } = input
+    try {
+        const user = await userModel.findById(userId)
+        if (!user) {
+            return {
+                success: false,
+                status: 401,
+                message: responseMessage.UNAUTHORIZED,
+                data: null
+            }
+        }
+
+        const meeting = await counsellingModel.findById(meetingId)
+        if (!meeting) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Meeting'),
+                data: null
+            }
+        }        
+
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        if (meeting.userId.toString() !== user._id.toString() && meeting.institutionId.toString() !== user._id.toString()) {
+            return {
+                success: false,
+                status: 403,
+                message: responseMessage.INTERNAL_SERVER_ERROR,
+                data: null
+            }
+        }
+
+        if (meeting.isApproved === false) {
+            return {
+                success: false,
+                status: 400,
+                message: 'Rescheduling is not allowed for disapproved meetings.',
+                data: null
+            }
+        }
+
+        meeting.date = new Date(newDate)
+        meeting.time = newTime
+        meeting.isApproved = null
+        meeting.meetingURL = null
+
+        await meeting.save()
+
+        return {
+            success: true,
+            status: 200,
+            message: 'Meeting rescheduled successfully.',
+            data: meeting
         }
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
