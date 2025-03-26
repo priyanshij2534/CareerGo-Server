@@ -75,7 +75,7 @@ export const ApproveCounsellingMeeting = async (input: ApprovalDTO, counsellingI
             }
         }
 
-        if(counsellingMeeting.status === ECounsellingStatus.CANCELLED) {
+        if (counsellingMeeting.status === ECounsellingStatus.CANCELLED) {
             return {
                 success: false,
                 status: 400,
@@ -85,9 +85,27 @@ export const ApproveCounsellingMeeting = async (input: ApprovalDTO, counsellingI
         }
 
         const institution = await institutionModel.findById(counsellingMeeting.institutionId)
+        if (!institution) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('Institution'),
+                data: null
+            }
+        }
 
         const loggedInUser = await userModel.findById(loggedInUserId)
-        if (loggedInUser?._id !== institution?.adminId) {
+        if (!loggedInUser) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.UNAUTHORIZED,
+                data: null
+            }
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        if (loggedInUserId != institution.adminId.toString()) {
             return {
                 success: false,
                 status: 400,
@@ -109,7 +127,7 @@ export const ApproveCounsellingMeeting = async (input: ApprovalDTO, counsellingI
         await counsellingMeeting.save()
 
         return {
-            success: false,
+            success: true,
             status: 200,
             message: `Meeting has been ${counsellingMeeting.isApproved ? 'Approved' : 'Rejected'}`,
             data: counsellingMeeting
@@ -321,6 +339,42 @@ export const CompleteCounsellingMeeting = async (meetingId: string, institutionI
             status: 200,
             message: 'Meeting marked as completed successfully.',
             data: meeting
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errorMessage,
+            data: null
+        }
+    }
+}
+
+export const GetAllBookedDate = async (userId: string): Promise<ApiMessage> => {
+    try {
+        const user = await userModel.findById(userId)
+        if (!user) {
+            return {
+                success: false,
+                status: 404,
+                message: responseMessage.NOT_FOUND('User'),
+                data: null
+            }
+        }
+
+        const bookedDates = await counsellingModel
+            .find({
+                userId: userId,
+                status: { $nin: [ECounsellingStatus.REJECTED, ECounsellingStatus.CANCELLED] }
+            })
+            .select('date')
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: bookedDates
         }
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
