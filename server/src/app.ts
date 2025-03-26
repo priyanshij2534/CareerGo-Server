@@ -16,6 +16,7 @@ import mailRouter from './router/mailer'
 import instiutionRouter from './router/institution'
 import userouter from './router/user'
 import recommendationsRouter from './router/recommendations'
+import counsellingRouter from './router/counselling'
 
 const app: Application = express()
 
@@ -43,6 +44,7 @@ app.use(authentication)
 app.use('/api/v1/health', healthRouter)
 app.use('/api/v1/user', userouter)
 app.use('/api/v1/recommendations', recommendationsRouter)
+app.use('/api/v1/counselling', counsellingRouter)
 
 // 404 hander
 app.use((req: Request, _: Response, next: NextFunction) => {

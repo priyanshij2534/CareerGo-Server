@@ -43,7 +43,7 @@ export enum EGradeType {
 export enum ECourseMode {
     OFFLINE = 'Offline',
     ONLINE = 'Online',
-    HYBRID= 'Hybrid'
+    HYBRID = 'Hybrid'
 }
 
 export enum EConsideration {
@@ -54,7 +54,7 @@ export enum EConsideration {
 
 export enum EEducationLevel {
     UG = 'Undergraduate',
-    PG = 'Postgraduate',
+    PG = 'Postgraduate'
 }
 
 export enum EDegreeCategory {
@@ -73,4 +73,12 @@ export enum EExam {
     NEET = 'NEET',
     GATE = 'GATE',
     IIT_JAM = 'IIT JAM'
+}
+
+export enum ECounsellingStatus {
+    PENDING_APPROVAL = 'Approval Pending',
+    APPROVED = 'Approved',
+    REJECTED = 'Rejected',
+    SCHEDULED = 'Scheduled',
+    COMPLETED = 'Completed'
 }
