@@ -182,11 +182,11 @@ router.put('/complete/:counsellingId', rateLimit, async (req: Request, res: Resp
         if (!accessToken) {
             return ApiError(next, null, req, 400, responseMessage.UNAUTHORIZED)
         }
-        const { userId } = VerifyToken(accessToken, config.ACCESS_TOKEN.SECRET as string) as IDecryptedJwt
+        const { institutionId } = VerifyToken(accessToken, config.ACCESS_TOKEN.SECRET as string) as IDecryptedJwt
 
         const counsellingId = req.params.counsellingId
 
-        const { success, status, message, data } = await CompleteCounsellingMeeting(counsellingId, userId)
+        const { success, status, message, data } = await CompleteCounsellingMeeting(counsellingId, institutionId)
         if (!success) {
             return ApiError(next, null, req, status, message)
         }

@@ -21,7 +21,6 @@ const counsellingSchema = new mongoose.Schema<ICounselling>(
         },
         date: {
             type: Date,
-            unique: true,
             required: true
         },
         time: {
