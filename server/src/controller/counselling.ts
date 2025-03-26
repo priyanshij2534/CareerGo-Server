@@ -75,6 +75,15 @@ export const ApproveCounsellingMeeting = async (input: ApprovalDTO, counsellingI
             }
         }
 
+        if(counsellingMeeting.status === ECounsellingStatus.CANCELLED) {
+            return {
+                success: false,
+                status: 400,
+                message: 'Meeting has been cancelled',
+                data: null
+            }
+        }
+
         const institution = await institutionModel.findById(counsellingMeeting.institutionId)
 
         const loggedInUser = await userModel.findById(loggedInUserId)
@@ -168,7 +177,8 @@ export const CancelCounsellingMeeting = async (userId: string, counsellingMeetin
             }
         }
 
-        if (user._id !== counselling._id) {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        if (userId !== counselling.userId.toString()) {
             return {
                 success: false,
                 status: 401,
@@ -177,12 +187,11 @@ export const CancelCounsellingMeeting = async (userId: string, counsellingMeetin
             }
         }
 
-        await counselling.deleteOne({
-            _id: counsellingMeetingId
-        })
+        counselling.status = ECounsellingStatus.CANCELLED
+        await counselling.save()
 
         return {
-            success: false,
+            success: true,
             status: 200,
             message: responseMessage.SUCCESS,
             data: null
@@ -276,7 +285,7 @@ export const CompleteCounsellingMeeting = async (meetingId: string, institutionI
             }
         }
 
-        if(!meeting.isApproved) {
+        if (!meeting.isApproved) {
             return {
                 success: false,
                 status: 400,

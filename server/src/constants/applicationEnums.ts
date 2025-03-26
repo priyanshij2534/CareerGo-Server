@@ -80,5 +80,6 @@ export enum ECounsellingStatus {
     APPROVED = 'Approved',
     REJECTED = 'Rejected',
     SCHEDULED = 'Scheduled',
-    COMPLETED = 'Completed'
+    COMPLETED = 'Completed',
+    CANCELLED = 'Cancelled'
 }
