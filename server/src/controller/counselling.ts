@@ -386,3 +386,42 @@ export const GetAllBookedDate = async (userId: string): Promise<ApiMessage> => {
         }
     }
 }
+
+export const GetMeetingsForDashboard = async (userId: string): Promise<ApiMessage> => {
+    try {
+        const upcomingSessions = await counsellingModel
+            .find({
+                userId: userId,
+                status: { $in: [ECounsellingStatus.APPROVED, ECounsellingStatus.PENDING_APPROVAL] }
+            })
+            .limit(5).select('_id status date time purpose')
+            .populate({ path: 'institutionId', select: '_id institutionName' })
+
+        const completedSessions = await counsellingModel
+            .find({
+                userId: userId,
+                status: ECounsellingStatus.COMPLETED
+            })
+            .limit(5)
+            .limit(5).select('_id status date time purpose')
+            .populate({ path: 'institutionId', select: '_id institutionName' })
+
+        return {
+            success: true,
+            status: 200,
+            message: responseMessage.SUCCESS,
+            data: {
+                upcomingSessions: upcomingSessions,
+                completedSessions: completedSessions
+            }
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errorMessage,
+            data: null
+        }
+    }
+}

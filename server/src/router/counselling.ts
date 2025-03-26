@@ -4,7 +4,7 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { validateDTO } from '../utils/validateDto'
 import DtoError from '../utils/DtoError'
 import rateLimit from '../middleware/rateLimit'
-import { ApproveCounsellingMeeting, BookNewCounsellingMeeting, CancelCounsellingMeeting, CompleteCounsellingMeeting, GetAllBookedDate, GetAllCounsellingMeeting, RescheduleCounsellingMeeting } from '../controller/counselling'
+import { ApproveCounsellingMeeting, BookNewCounsellingMeeting, CancelCounsellingMeeting, CompleteCounsellingMeeting, GetAllBookedDate, GetAllCounsellingMeeting, GetMeetingsForDashboard, RescheduleCounsellingMeeting } from '../controller/counselling'
 import { CounsellingDTO } from '../constants/DTO/Counselling/CounsellingDTO'
 import responseMessage from '../constants/responseMessage'
 import { VerifyToken } from '../utils/helper/syncHelpers'
@@ -87,6 +87,31 @@ router.get('/getBookedDates', rateLimit, async (req: Request, res: Response, nex
         const { userId } = VerifyToken(accessToken, config.ACCESS_TOKEN.SECRET as string) as IDecryptedJwt
 
         const { success, status, message, data } = await GetAllBookedDate(userId)
+        if (!success) {
+            return ApiError(next, null, req, status, message)
+        }
+        return ApiResponse(req, res, status, message, data)
+    } catch (err) {
+        return ApiError(next, err, req, 500)
+    }
+})
+
+/*
+    Route: /api/v1/counselling/getSessionsForDashboard
+    Method: GET
+    Desc: Get counselling sessions for dashboard
+    Access: Protected
+*/
+router.get('/getSessionsForDashboard', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { cookies } = req
+        const { accessToken } = cookies as { accessToken: string | undefined }
+        if (!accessToken) {
+            return ApiError(next, null, req, 400, responseMessage.UNAUTHORIZED)
+        }
+        const { userId } = VerifyToken(accessToken, config.ACCESS_TOKEN.SECRET as string) as IDecryptedJwt
+
+        const { success, status, message, data } = await GetMeetingsForDashboard(userId)
         if (!success) {
             return ApiError(next, null, req, status, message)
         }
