@@ -219,7 +219,7 @@ export const RescheduleCounsellingMeeting = async (meetingId: string, userId: st
                 message: responseMessage.NOT_FOUND('Meeting'),
                 data: null
             }
-        }        
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
         if (meeting.userId.toString() !== user._id.toString() && meeting.institutionId.toString() !== user._id.toString()) {
@@ -251,6 +251,66 @@ export const RescheduleCounsellingMeeting = async (meetingId: string, userId: st
             success: true,
             status: 200,
             message: 'Meeting rescheduled successfully.',
+            data: meeting
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+        return {
+            success: false,
+            status: 500,
+            message: errorMessage,
+            data: null
+        }
+    }
+}
+
+export const CompleteCounsellingMeeting = async (meetingId: string, institutionId: string): Promise<ApiMessage> => {
+    try {
+        const meeting = await counsellingModel.findById(meetingId)
+        if (!meeting) {
+            return {
+                success: false,
+                status: 404,
+                message: 'Meeting not found.',
+                data: null
+            }
+        }
+
+        if(!meeting.isApproved) {
+            return {
+                success: false,
+                status: 400,
+                message: 'Meeting is not yet approved',
+                data: null
+            }
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        if (meeting.institutionId.toString() !== institutionId) {
+            return {
+                success: false,
+                status: 403,
+                message: 'You are not authorized to complete this meeting.',
+                data: null
+            }
+        }
+
+        if (meeting.status === ECounsellingStatus.COMPLETED) {
+            return {
+                success: false,
+                status: 400,
+                message: 'Meeting is already marked as completed.',
+                data: null
+            }
+        }
+
+        meeting.status = ECounsellingStatus.COMPLETED
+        await meeting.save()
+
+        return {
+            success: true,
+            status: 200,
+            message: 'Meeting marked as completed successfully.',
             data: meeting
         }
     } catch (error) {
