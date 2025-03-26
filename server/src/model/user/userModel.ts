@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema<IUser>(
             enum: Object.values(EUserRole),
             required: true
         },
+        userProfileProgress: {
+            type: Number,
+            default: 0,
+            required: false
+        }, 
         institution: {
             _id: false,
             isAssociated: {

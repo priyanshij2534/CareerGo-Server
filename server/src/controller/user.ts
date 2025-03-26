@@ -31,7 +31,7 @@ export const SelfIdentification = async (accessToken: string): Promise<ApiMessag
 
         let response = {}
 
-        if(user.role === EUserRole.Institution_ADMIN) {
+        if (user.role === EUserRole.Institution_ADMIN) {
             response = {
                 userId: user._id,
                 name: user.name,
@@ -47,7 +47,8 @@ export const SelfIdentification = async (accessToken: string): Promise<ApiMessag
                 emailAddress: user.emailAddress,
                 role: user.role,
                 profileImage: user.profileImage,
-                institutionId: null
+                institutionId: null,
+                userProfileProgress: user.userProfileProgress
             }
         }
 

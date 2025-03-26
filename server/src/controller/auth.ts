@@ -73,6 +73,7 @@ export const RegisterUser = async (input: UserRegistrationDTO): Promise<ApiMessa
                 expiry: null,
                 lastResetAt: null
             },
+            userProfileProgress: 0,
             password: encryptedPassword,
             role: role,
             lastLoginAt: null,

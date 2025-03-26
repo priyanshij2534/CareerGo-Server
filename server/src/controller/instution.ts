@@ -79,6 +79,7 @@ export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<
                 expiry: null,
                 lastResetAt: null
             },
+            userProfileProgress: 0,
             password: encryptedPassword,
             role: EUserRole.Institution_ADMIN,
             lastLoginAt: null,

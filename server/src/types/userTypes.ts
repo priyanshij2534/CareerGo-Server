@@ -24,6 +24,7 @@ export interface IUser {
         expiry: number | null
         lastResetAt: Date | null
     }
+    userProfileProgress: number 
     lastLoginAt: Date | null
     consent: boolean
 }
