@@ -79,7 +79,6 @@ export enum ECounsellingStatus {
     PENDING_APPROVAL = 'Approval Pending',
     APPROVED = 'Approved',
     REJECTED = 'Rejected',
-    SCHEDULED = 'Scheduled',
     COMPLETED = 'Completed',
     CANCELLED = 'Cancelled'
 }

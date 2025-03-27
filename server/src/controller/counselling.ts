@@ -143,13 +143,19 @@ export const ApproveCounsellingMeeting = async (input: ApprovalDTO, counsellingI
     }
 }
 
-export const GetAllCounsellingMeeting = async (userId?: string, institutionId?: string, status?: ECounsellingStatus): Promise<ApiMessage> => {
+export const GetAllCounsellingMeeting = async (userId?: string, institutionId?: string, status?: string): Promise<ApiMessage> => {
     try {
         const query: Record<string, unknown> = {}
 
         if (userId) query.userId = userId
         if (institutionId) query.institutionId = institutionId
-        if (status) query.status = status
+        if (status) {
+            if (status === 'Upcoming') {
+                query.status = { $in: [ECounsellingStatus.APPROVED, ECounsellingStatus.PENDING_APPROVAL] }
+            } else {
+                query.status = status
+            }
+        }
 
         const meetings = await counsellingModel
             .find(query)
@@ -271,6 +277,7 @@ export const RescheduleCounsellingMeeting = async (meetingId: string, userId: st
         meeting.time = newTime
         meeting.isApproved = null
         meeting.meetingURL = null
+        meeting.status = ECounsellingStatus.PENDING_APPROVAL
 
         await meeting.save()
 
@@ -394,7 +401,8 @@ export const GetMeetingsForDashboard = async (userId: string): Promise<ApiMessag
                 userId: userId,
                 status: { $in: [ECounsellingStatus.APPROVED, ECounsellingStatus.PENDING_APPROVAL] }
             })
-            .limit(5).select('_id status date time purpose')
+            .limit(5)
+            .select('_id status date time purpose')
             .populate({ path: 'institutionId', select: '_id institutionName' })
 
         const completedSessions = await counsellingModel
@@ -403,7 +411,8 @@ export const GetMeetingsForDashboard = async (userId: string): Promise<ApiMessag
                 status: ECounsellingStatus.COMPLETED
             })
             .limit(5)
-            .limit(5).select('_id status date time purpose')
+            .limit(5)
+            .select('_id status date time purpose')
             .populate({ path: 'institutionId', select: '_id institutionName' })
 
         return {

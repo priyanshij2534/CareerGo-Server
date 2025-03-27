@@ -11,7 +11,6 @@ import { VerifyToken } from '../utils/helper/syncHelpers'
 import { IDecryptedJwt } from '../types/userTypes'
 import config from '../config/config'
 import { ApprovalDTO } from '../constants/DTO/Counselling/ApprovalDTO'
-import { ECounsellingStatus } from '../constants/applicationEnums'
 import { RescheduleCounsellingDTO } from '../constants/DTO/Counselling/RescheduleDTO'
 const router = Router()
 
@@ -58,7 +57,7 @@ router.post('/request', rateLimit, async (req: Request, res: Response, next: Nex
 router.get('/', rateLimit, async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.query.userId as string
-        const counsellingMeetingStatus = req.query.status as string as ECounsellingStatus
+        const counsellingMeetingStatus = req.query.status as string
         const institutionId = req.query.institutionId as string
 
         const { success, status, message, data } = await GetAllCounsellingMeeting(userId, institutionId, counsellingMeetingStatus)
