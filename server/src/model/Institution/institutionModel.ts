@@ -38,6 +38,10 @@ const institutionSchema = new mongoose.Schema<IInstitution>(
         admission: {
             type: Boolean,
             required: false
+        },
+        hostel: {
+            type: Boolean,
+            default: true
         }
     },
     { timestamps: true }

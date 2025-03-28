@@ -7,10 +7,10 @@ import { emailVerificationTemplate } from '../constants/template/emailVerificati
 import institutionModel from '../model/Institution/institutionModel'
 import userModel from '../model/user/userModel'
 import { sendEmail } from '../service/nodemailerService'
-import { IDecryptedJwt, IInstitution, IUser, IUserBasicInfo } from '../types/userTypes'
+import { IInstitution, IUser, IUserBasicInfo } from '../types/userTypes'
 import { ApiMessage } from '../utils/ApiMessage'
 import { EncryptPassword } from '../utils/helper/asyncHelpers'
-import { GenerateRandomId, GenerateOTP, VerifyToken } from '../utils/helper/syncHelpers'
+import { GenerateRandomId, GenerateOTP } from '../utils/helper/syncHelpers'
 import { institutionRegistrationConfirmationTemplate } from '../constants/template/institutionRegistrationSuccesTemplate'
 import userBasicInfoModel from '../model/user/Profile/userBasicInfoModel'
 import courseCategoryModel from '../model/Institution/courseCategoryModel'
@@ -102,7 +102,8 @@ export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<
             registrationNumber: registrationNumber,
             adminId: newUser.id as mongoose.Schema.Types.ObjectId,
             consent: conscent,
-            admission: null
+            admission: null,
+            hostel: true
         }
 
         const newInstitution = await institutionModel.create(institutionPayload)
@@ -151,59 +152,210 @@ export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<
     }
 }
 
-export const GetAllInstitutions = async (accessToken: string, page: number, limit: number, search: string | null): Promise<ApiMessage> => {
+// export const GetAllInstitutions = async (
+//     page: number,
+//     limit: number
+//     search?: string | null, //on institutionName
+//     minFeesRange?: number | null,
+//     maxFeesRange?: number | null,
+//     hostel?: boolean | null, //is hostel avialable or not
+//     admission?: boolean | null, //is admission open or closed
+//     courseCategory?: string[] | [] //search based on course category array
+// ): Promise<ApiMessage> => {
+//     const skip = (page - 1) * limit
+//     try {
+//         const query = {}
+
+//         const totalCount = await institutionModel.countDocuments(query)
+
+//         const institutions = await institutionModel.aggregate([
+//             {
+//                 $lookup: {
+//                     from: 'courses',
+//                     let: { institutionId: '$_id' },
+//                     pipeline: [
+//                         {
+//                             $match: {
+//                                 $expr: { $eq: ['$institutionId', '$$institutionId'] }
+//                             }
+//                         },
+//                         {
+//                             $project: {
+//                                 _id: 1, // Keeping _id for reference
+//                                 courseName: 1,
+//                                 fees: 1
+//                             }
+//                         }
+//                     ],
+//                     as: 'courses'
+//                 }
+//             },
+//             {
+//                 $lookup: {
+//                     from: 'coursecategories', // Make sure this matches the actual collection name in MongoDB
+//                     let: { institutionId: '$_id' },
+//                     pipeline: [
+//                         {
+//                             $match: {
+//                                 $expr: { $eq: ['$institutionId', '$$institutionId'] }
+//                             }
+//                         },
+//                         {
+//                             $project: {
+//                                 _id: 0, // Excluding _id if not needed
+//                                 courseCategory: 1
+//                             }
+//                         }
+//                     ],
+//                     as: 'courseCategories'
+//                 }
+//             },
+//             {
+//                 $project: {
+//                     _id: 1, // Keeping _id for reference
+//                     institutionName: 1,
+//                     logo: 1,
+//                     website: 1,
+//                     registrationNumber: 1,
+//                     admission: 1,
+//                     hostel: 1,
+//                     courses: 1, // Keep courses from $lookup
+//                     courseCategories: 1 // Include course categories from $lookup
+//                 }
+//             }
+//         ])
+
+//         return {
+//             success: true,
+//             status: 200,
+//             message: responseMessage.SUCCESS,
+//             data: {
+//                 institutions: institutions,
+//                 totalCount: totalCount,
+//                 page: page,
+//                 limit: limit
+//             }
+//         }
+//     } catch (error) {
+//         const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
+//         return {
+//             success: false,
+//             status: 500,
+//             message: errMessage,
+//             data: null
+//         }
+//     }
+// }
+
+export const GetAllInstitutions = async (
+    page: number,
+    limit: number,
+    search?: string | null,
+    minFeesRange?: number | null,
+    maxFeesRange?: number | null,
+    hostel?: boolean | null,
+    admission?: boolean | null,
+    courseCategory?: string[] | []
+): Promise<ApiMessage> => {
     const skip = (page - 1) * limit
     try {
-        const { userId } = VerifyToken(accessToken, config.ACCESS_TOKEN.SECRET as string) as IDecryptedJwt
-        const user = await userModel.findById(userId)
-        if (!user) {
-            return {
-                success: false,
-                status: 401,
-                message: responseMessage.UNAUTHORIZED,
-                data: null
-            }
-        }
-
-        const roleBasedQueries: Record<string, object> = {
-            [EUserRole.MASTER_ADMIN]: {},
-            [EUserRole.ADMIN]: {}
-        }
-
-        const query = roleBasedQueries[user.role] || null
-        if (!query) {
-            return {
-                success: false,
-                status: 401,
-                message: responseMessage.UNAUTHORIZED,
-                data: null
-            }
-        }
+        const query: Record<string, unknown> = {}
 
         if (search) {
-            const searchQuery = {
-                $or: [{ name: { $regex: search, $options: 'i' } }, { emailAddress: { $regex: search, $options: 'i' } }]
-            }
-            Object.assign(query, searchQuery)
+            query.institutionName = { $regex: search, $options: 'i' }
+        }
+        if (typeof hostel === 'boolean') {
+            query.hostel = hostel
+        }
+        if (typeof admission === 'boolean') {
+            query.admission = admission
         }
 
+        const institutions = await institutionModel.aggregate([
+            { $match: query },
+            {
+                $lookup: {
+                    from: 'courses',
+                    let: { institutionId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ['$institutionId', '$$institutionId'] }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 1,
+                                courseName: 1,
+                                fees: 1
+                            }
+                        }
+                    ],
+                    as: 'courses'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'coursecategories',
+                    let: { institutionId: '$_id' },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ['$institutionId', '$$institutionId'] }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                courseCategory: 1
+                            }
+                        }
+                    ],
+                    as: 'courseCategories'
+                }
+            },
+            {
+                $addFields: {
+                    courseCategories: '$courseCategories.courseCategory',
+                    minCourseFees: { $min: '$courses.fees' },
+                    maxCourseFees: { $max: '$courses.fees' }
+                }
+            },
+            {
+                $match: {
+                    ...(minFeesRange !== null && minFeesRange !== undefined ? { minCourseFees: { $gte: minFeesRange } } : {}),
+                    ...(maxFeesRange !== null && maxFeesRange !== undefined ? { maxCourseFees: { $lte: maxFeesRange } } : {}),
+                    ...(courseCategory && courseCategory.length > 0 ? { courseCategories: { $in: courseCategory } } : {})
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    institutionName: 1,
+                    logo: 1,
+                    website: 1,
+                    registrationNumber: 1,
+                    admission: 1,
+                    hostel: 1,
+                    courses: 1,
+                    courseCategories: 1
+                }
+            },
+            { $skip: skip },
+            { $limit: limit }
+        ])
+
         const totalCount = await institutionModel.countDocuments(query)
-        const institutions = await institutionModel
-            .find(query, 'institutionName emailAddress logo website registrationNumber consent adminId createdAt')
-            .populate('adminId', 'name')
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
 
         return {
             success: true,
             status: 200,
             message: responseMessage.SUCCESS,
             data: {
-                institutions: institutions,
-                totalCount: totalCount,
-                page: page,
-                limit: limit
+                institutions,
+                totalCount,
+                page,
+                limit
             }
         }
     } catch (error) {
@@ -743,7 +895,7 @@ export const GetAllInstitutionList = async (page: number, limit: number, search:
 
         const institutionList = await institutionModel.find(query).select('institutionName _id').skip(skip).limit(limit)
         const institutionCount = await institutionModel.countDocuments(query)
-        
+
         return {
             success: true,
             status: 200,

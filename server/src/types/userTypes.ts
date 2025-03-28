@@ -38,6 +38,7 @@ export interface IInstitution {
     adminId: mongoose.Schema.Types.ObjectId
     consent: boolean
     admission: boolean | null 
+    hostel: boolean | null 
 }
 
 export interface IUserBasicInfo {
