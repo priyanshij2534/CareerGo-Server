@@ -254,8 +254,14 @@ export const RescheduleCounsellingMeeting = async (meetingId: string, userId: st
             }
         }
 
+        let institution
+
+        if(user.institution.isAssociated) {
+            institution = await institutionModel.findById(user.institution.institutionId)
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
-        if (meeting.userId.toString() !== user._id.toString() && meeting.institutionId.toString() !== user._id.toString()) {
+        if (meeting.userId.toString() !== user._id.toString() && meeting.institutionId.toString() !== institution?._id.toString()) {
             return {
                 success: false,
                 status: 403,
