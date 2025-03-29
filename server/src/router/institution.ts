@@ -63,27 +63,35 @@ router.post('/create', rateLimit, async (req: Request, res: Response, next: Next
 */
 router.get('/getAll', authentication, rateLimit, async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const page: number = req.query.page ? Number(req.query.page) : 1;
-        const limit: number = req.query.limit ? Number(req.query.limit) : 10;
+        const page: number = req.query.page ? Number(req.query.page) : 1
+        const limit: number = req.query.limit ? Number(req.query.limit) : 10
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
-        const search: string | null = req.query.search ? String(req.query.search) : null;
-        const minFeesRange: number | null = req.query.minFeesRange ? Number(req.query.minFeesRange) : null;
-        const maxFeesRange: number | null = req.query.maxFeesRange ? Number(req.query.maxFeesRange) : null;
-        const hostel: boolean | null = req.query.hostel ? req.query.hostel === 'true' : null;
-        const admission: boolean | null = req.query.admission ? req.query.admission === 'true' : null;
+        const search: string | null = req.query.search ? String(req.query.search) : null
+        const minFeesRange: number | null = req.query.minFeesRange ? Number(req.query.minFeesRange) : null
+        const maxFeesRange: number | null = req.query.maxFeesRange ? Number(req.query.maxFeesRange) : null
+        const hostel: boolean | null = req.query.hostel ? req.query.hostel === 'true' : null
+        const admission: boolean | null = req.query.admission ? req.query.admission === 'true' : null
         // eslint-disable-next-line @typescript-eslint/no-base-to-string
-        const courseCategory: string[] | [] = req.query.courseCategory ? String(req.query.courseCategory).split(',') : [];
+        const courseCategory: string[] | [] = req.query.courseCategory ? String(req.query.courseCategory).split(',') : []
 
-        const { success, status, message, data } = await GetAllInstitutions(page, limit, search, minFeesRange, maxFeesRange, hostel, admission, courseCategory);
+        const { success, status, message, data } = await GetAllInstitutions(
+            page,
+            limit,
+            search,
+            minFeesRange,
+            maxFeesRange,
+            hostel,
+            admission,
+            courseCategory
+        )
         if (!success) {
-            return ApiError(next, null, req, status, message);
+            return ApiError(next, null, req, status, message)
         }
-        return ApiResponse(req, res, status, message, data);
+        return ApiResponse(req, res, status, message, data)
     } catch (err) {
-        return ApiError(next, err, req, 500);
+        return ApiError(next, err, req, 500)
     }
-});
-
+})
 
 /*
     Route: /api/v1/institution/details/:institutionId
@@ -240,7 +248,7 @@ router.delete('/courseCategory/:institutionId', rateLimit, async (req: Request, 
         }
 
         const categoryName = req.query.categoryName as string
-        if(!categoryName) {
+        if (!categoryName) {
             return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
         }
 
@@ -301,8 +309,8 @@ router.get('/course/all/:institutionId', rateLimit, async (req: Request, res: Re
             return ApiError(next, null, req, 400, responseMessage.INVALID_REQUEST)
         }
 
-        const category: string[] = req.query.category ? (req.query.category as string).split(',') : [];
-        const search: string = req.query.search as string || '';
+        const category: string[] = req.query.category ? (req.query.category as string).split(',') : []
+        const search: string = (req.query.search as string) || ''
 
         const { success, status, message, data } = await GetAllCourse(institutionId, category, search)
         if (!success) {

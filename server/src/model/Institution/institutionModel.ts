@@ -37,7 +37,7 @@ const institutionSchema = new mongoose.Schema<IInstitution>(
         },
         admission: {
             type: Boolean,
-            required: false
+            required: true
         },
         hostel: {
             type: Boolean,

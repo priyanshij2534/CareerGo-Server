@@ -102,7 +102,7 @@ export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<
             registrationNumber: registrationNumber,
             adminId: newUser.id as mongoose.Schema.Types.ObjectId,
             consent: conscent,
-            admission: null,
+            admission: false,
             hostel: true
         }
 
@@ -152,101 +152,6 @@ export const RegisterInstitution = async (input: CreateInstitutionDTO): Promise<
     }
 }
 
-// export const GetAllInstitutions = async (
-//     page: number,
-//     limit: number
-//     search?: string | null, //on institutionName
-//     minFeesRange?: number | null,
-//     maxFeesRange?: number | null,
-//     hostel?: boolean | null, //is hostel avialable or not
-//     admission?: boolean | null, //is admission open or closed
-//     courseCategory?: string[] | [] //search based on course category array
-// ): Promise<ApiMessage> => {
-//     const skip = (page - 1) * limit
-//     try {
-//         const query = {}
-
-//         const totalCount = await institutionModel.countDocuments(query)
-
-//         const institutions = await institutionModel.aggregate([
-//             {
-//                 $lookup: {
-//                     from: 'courses',
-//                     let: { institutionId: '$_id' },
-//                     pipeline: [
-//                         {
-//                             $match: {
-//                                 $expr: { $eq: ['$institutionId', '$$institutionId'] }
-//                             }
-//                         },
-//                         {
-//                             $project: {
-//                                 _id: 1, // Keeping _id for reference
-//                                 courseName: 1,
-//                                 fees: 1
-//                             }
-//                         }
-//                     ],
-//                     as: 'courses'
-//                 }
-//             },
-//             {
-//                 $lookup: {
-//                     from: 'coursecategories', // Make sure this matches the actual collection name in MongoDB
-//                     let: { institutionId: '$_id' },
-//                     pipeline: [
-//                         {
-//                             $match: {
-//                                 $expr: { $eq: ['$institutionId', '$$institutionId'] }
-//                             }
-//                         },
-//                         {
-//                             $project: {
-//                                 _id: 0, // Excluding _id if not needed
-//                                 courseCategory: 1
-//                             }
-//                         }
-//                     ],
-//                     as: 'courseCategories'
-//                 }
-//             },
-//             {
-//                 $project: {
-//                     _id: 1, // Keeping _id for reference
-//                     institutionName: 1,
-//                     logo: 1,
-//                     website: 1,
-//                     registrationNumber: 1,
-//                     admission: 1,
-//                     hostel: 1,
-//                     courses: 1, // Keep courses from $lookup
-//                     courseCategories: 1 // Include course categories from $lookup
-//                 }
-//             }
-//         ])
-
-//         return {
-//             success: true,
-//             status: 200,
-//             message: responseMessage.SUCCESS,
-//             data: {
-//                 institutions: institutions,
-//                 totalCount: totalCount,
-//                 page: page,
-//                 limit: limit
-//             }
-//         }
-//     } catch (error) {
-//         const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
-//         return {
-//             success: false,
-//             status: 500,
-//             message: errMessage,
-//             data: null
-//         }
-//     }
-// }
-
 export const GetAllInstitutions = async (
     page: number,
     limit: number,
@@ -270,7 +175,7 @@ export const GetAllInstitutions = async (
         if (typeof admission === 'boolean') {
             query.admission = admission
         }
-
+        
         const institutions = await institutionModel.aggregate([
             { $match: query },
             {
@@ -284,14 +189,21 @@ export const GetAllInstitutions = async (
                             }
                         },
                         {
+                            $group: {
+                                _id: null,
+                                minFees: { $min: '$fees' },
+                                maxFees: { $max: '$fees' }
+                            }
+                        },
+                        {
                             $project: {
-                                _id: 1,
-                                courseName: 1,
-                                fees: 1
+                                _id: 0,
+                                minFees: 1,
+                                maxFees: 1
                             }
                         }
                     ],
-                    as: 'courses'
+                    as: 'courseFees'
                 }
             },
             {
@@ -317,8 +229,8 @@ export const GetAllInstitutions = async (
             {
                 $addFields: {
                     courseCategories: '$courseCategories.courseCategory',
-                    minCourseFees: { $min: '$courses.fees' },
-                    maxCourseFees: { $max: '$courses.fees' }
+                    minCourseFees: { $arrayElemAt: ['$courseFees.minFees', 0] },
+                    maxCourseFees: { $arrayElemAt: ['$courseFees.maxFees', 0] }
                 }
             },
             {
@@ -337,7 +249,8 @@ export const GetAllInstitutions = async (
                     registrationNumber: 1,
                     admission: 1,
                     hostel: 1,
-                    courses: 1,
+                    minCourseFees: 1,
+                    maxCourseFees: 1,
                     courseCategories: 1
                 }
             },
