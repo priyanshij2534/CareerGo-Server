@@ -138,19 +138,31 @@ export const UpdateBasicInfo = async (input: UserBasicInfoDTO, userId: string): 
 
         if (phone) {
             userBasicInfo.phone = phone
+            if(userBasicInfo.phone === null) {
+                user.userProfileProgress += 2
+            }
             updated = true
         }
         if (dateOfBirth) {
             userBasicInfo.dateOfBirth = new Date(dateOfBirth)
             updated = true
+            if(userBasicInfo.dateOfBirth === null) {
+                user.userProfileProgress += 2
+            }
         }
         if (gender) {
             userBasicInfo.gender = gender
+            if(userBasicInfo.gender === null) {
+                user.userProfileProgress += 2
+            }
             updated = true
         }
         if (region) {
             userBasicInfo.region = region
             updated = true
+            if(userBasicInfo.region === null) {
+                user.userProfileProgress += 2
+            }
         }
 
         if (languages?.length) {
@@ -162,11 +174,17 @@ export const UpdateBasicInfo = async (input: UserBasicInfoDTO, userId: string): 
                     userBasicInfo.languages.push(language)
                 }
             }
+            if(userBasicInfo.languages.length === 0) {
+                user.userProfileProgress += 5
+            }
             updated = true
         }
 
         if (skills?.length) {
             userBasicInfo.skills = skills
+            if(userBasicInfo.skills.length === 0) {
+                user.userProfileProgress += 5
+            }
             updated = true
         }
 
@@ -177,11 +195,15 @@ export const UpdateBasicInfo = async (input: UserBasicInfoDTO, userId: string): 
             } else {
                 userBasicInfo.socialLinks.push(socialLinks)
             }
+            if(userBasicInfo.socialLinks.length === 0) {
+                user.userProfileProgress += 2
+            }
             updated = true
         }
 
         if (updated) {
             await userBasicInfo.save()
+            await user.save()
             return {
                 success: true,
                 status: 200,
@@ -221,6 +243,15 @@ export const CreateUserAchievement = async (input: UserAchievementDTO, userId: s
                 message: responseMessage.INVALID_TOKEN,
                 data: null
             }
+        }
+
+        const userAchievementCount = await userAchievementModel.countDocuments({
+            userId: userId
+        })
+
+        if(userAchievementCount === 0) {
+            user.userProfileProgress += 20
+            await user.save()
         }
 
         const achievementPayload: IUserAchievement = {
@@ -403,6 +434,15 @@ export const CreateUserCertification = async (input: UserCertificationDTO, userI
                 message: responseMessage.INVALID_TOKEN,
                 data: null
             }
+        }
+
+        const userAchievementCount = await userCertificationModel.countDocuments({
+            userId: userId
+        })
+
+        if(userAchievementCount === 0) {
+            user.userProfileProgress += 20
+            await user.save()
         }
 
         const certificationPayload: IUserCertification = {
@@ -621,6 +661,15 @@ export const CreateUserEducation = async (input: UserEducationDTO, userId: strin
                 message: responseMessage.NOT_FOUND('User'),
                 data: null
             }
+        }
+
+        const userAchievementCount = await userEducationModel.countDocuments({
+            userId: userId
+        })
+
+        if(userAchievementCount === 0) {
+            user.userProfileProgress += 40
+            await user.save()
         }
 
         let payload: IUserEducation
