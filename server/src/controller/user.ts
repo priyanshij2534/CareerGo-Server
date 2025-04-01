@@ -137,35 +137,38 @@ export const UpdateBasicInfo = async (input: UserBasicInfoDTO, userId: string): 
         let updated = false
 
         if (phone) {
-            userBasicInfo.phone = phone
-            if(userBasicInfo.phone === null) {
+            if (userBasicInfo.phone === null) {
                 user.userProfileProgress += 2
             }
+            userBasicInfo.phone = phone
             updated = true
         }
         if (dateOfBirth) {
+            if (userBasicInfo.dateOfBirth === null) {
+                user.userProfileProgress += 2
+            }
             userBasicInfo.dateOfBirth = new Date(dateOfBirth)
             updated = true
-            if(userBasicInfo.dateOfBirth === null) {
-                user.userProfileProgress += 2
-            }
         }
         if (gender) {
-            userBasicInfo.gender = gender
-            if(userBasicInfo.gender === null) {
+            if (userBasicInfo.gender === null) {
                 user.userProfileProgress += 2
             }
+            userBasicInfo.gender = gender
             updated = true
         }
         if (region) {
-            userBasicInfo.region = region
-            updated = true
-            if(userBasicInfo.region === null) {
+            if (userBasicInfo.region === null) {
                 user.userProfileProgress += 2
             }
+            userBasicInfo.region = region
+            updated = true
         }
 
         if (languages?.length) {
+            if (userBasicInfo.languages.length === 0) {
+                user.userProfileProgress += 5
+            }
             for (const language of languages) {
                 const index = userBasicInfo.languages.findIndex((lang) => lang.name === language.name)
                 if (index !== -1) {
@@ -174,29 +177,28 @@ export const UpdateBasicInfo = async (input: UserBasicInfoDTO, userId: string): 
                     userBasicInfo.languages.push(language)
                 }
             }
-            if(userBasicInfo.languages.length === 0) {
-                user.userProfileProgress += 5
-            }
             updated = true
         }
 
         if (skills?.length) {
             userBasicInfo.skills = skills
-            if(userBasicInfo.skills.length === 0) {
+            if (userBasicInfo.skills.length === 0) {
                 user.userProfileProgress += 5
             }
             updated = true
         }
 
-        if (socialLinks) {
-            const index = userBasicInfo.socialLinks.findIndex((link) => link.platform === socialLinks.platform)
-            if (index !== -1) {
-                userBasicInfo.socialLinks[index] = socialLinks
-            } else {
-                userBasicInfo.socialLinks.push(socialLinks)
-            }
-            if(userBasicInfo.socialLinks.length === 0) {
-                user.userProfileProgress += 2
+        if (socialLinks?.length) {
+            if (userBasicInfo.socialLinks.length === 0) {
+                user.userProfileProgress += 2;
+            }                
+            for (const socialLink of socialLinks) {
+                const index = userBasicInfo.socialLinks.findIndex((link) => link.platform === socialLink.platform)
+                if (index !== -1) {
+                    userBasicInfo.socialLinks[index] = socialLink
+                } else {
+                    userBasicInfo.socialLinks.push(socialLink)
+                }
             }
             updated = true
         }
@@ -249,7 +251,7 @@ export const CreateUserAchievement = async (input: UserAchievementDTO, userId: s
             userId: userId
         })
 
-        if(userAchievementCount === 0) {
+        if (userAchievementCount === 0) {
             user.userProfileProgress += 20
             await user.save()
         }
@@ -440,7 +442,7 @@ export const CreateUserCertification = async (input: UserCertificationDTO, userI
             userId: userId
         })
 
-        if(userAchievementCount === 0) {
+        if (userAchievementCount === 0) {
             user.userProfileProgress += 20
             await user.save()
         }
@@ -667,7 +669,7 @@ export const CreateUserEducation = async (input: UserEducationDTO, userId: strin
             userId: userId
         })
 
-        if(userAchievementCount === 0) {
+        if (userAchievementCount === 0) {
             user.userProfileProgress += 40
             await user.save()
         }

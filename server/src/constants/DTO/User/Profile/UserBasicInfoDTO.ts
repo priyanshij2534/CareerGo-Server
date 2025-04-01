@@ -55,5 +55,5 @@ export class UserBasicInfoDTO {
 
     @IsOptional()
     @ValidateNested()
-    socialLinks?: SocialLinksDTO
+    socialLinks?: SocialLinksDTO[]
 }

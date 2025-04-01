@@ -26,7 +26,10 @@ export enum ELanguageExperties {
 
 export enum EAchievementType {
     Academic = 'Academic',
-    Professional = 'Professional'
+    Professional = 'Professional',
+    Extracurricular = 'Extracurricular',
+    Sports = 'Sports',
+    Arts = 'Arts',
 }
 
 export enum EEducationCategory {
