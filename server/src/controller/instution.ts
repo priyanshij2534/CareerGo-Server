@@ -641,7 +641,6 @@ export const GetAllCourse = async (institutionId: string, category?: string[], s
             }
         }
 
-        // Ensure category is an array and search is a string
         const categoryFilter = category && category.length > 0 ? { category: { $in: category } } : {}
         const searchFilter = search ? { courseName: { $regex: search, $options: 'i' } } : {}
 

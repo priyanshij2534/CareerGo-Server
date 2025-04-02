@@ -36,7 +36,7 @@ router.post('/', authentication, rateLimit, async (req: Request, res: Response, 
             return DtoError(next, req, requestValidation.status, requestValidation.errors)
         }
 
-        const { success, status, message, data } = await GetRecommendations(userId)
+        const { success, status, message, data } = await GetRecommendations(userId, req.body as RecommendationsDTO)
         if (!success) {
             return ApiError(next, null, req, status, message)
         }

@@ -1,21 +1,20 @@
-// import mongoose from 'mongoose'
-// import config from '../config/config'
-// import axios from 'axios'
-// import userAchievementModel from '../model/user/Profile/userAchievementModel'
-// import userBasicInfoModel from '../model/user/Profile/userBasicInfoModel'
-// import userCertificationModel from '../model/user/Profile/userCertificationModel'
-// import userEducationModel from '../model/user/Profile/userEducationModel'
-import responseMessage from '../constants/responseMessage'
 import institutionModel from '../model/Institution/institutionModel'
+import config from '../config/config'
+import axios from 'axios'
+import responseMessage from '../constants/responseMessage'
 import userModel from '../model/user/userModel'
 import { ApiMessage } from '../utils/ApiMessage'
 import courseCategoryModel from '../model/Institution/courseCategoryModel'
 import courseModel from '../model/Institution/courseModel'
+import { RecommendationsDTO } from '../constants/DTO/Recommendations/RecommendationsDTO'
+import { EDegreeCategory, EEducationLevel, EExam } from '../constants/applicationEnums'
+import userAchievementModel from '../model/user/Profile/userAchievementModel'
+import userCertificationModel from '../model/user/Profile/userCertificationModel'
+import userEducationModel from '../model/user/Profile/userEducationModel'
 
-export const GetRecommendations = async (userId: string): Promise<ApiMessage> => {
+export const GetRecommendations = async (userId: string, input: RecommendationsDTO): Promise<ApiMessage> => {
+    const { educationLevel, degreeCategory, budget, examDetails, hostel } = input
     try {
-        // const intrestCourse = ['B.Tech']
-
         const user = await userModel.findById(userId)
         if (!user) {
             return {
@@ -26,147 +25,205 @@ export const GetRecommendations = async (userId: string): Promise<ApiMessage> =>
             }
         }
 
-        // const userBasicInfo = await userBasicInfoModel
-        //     .findOne({
-        //         userId: userId
-        //     })
-        //     .select('gender region languages skills')
+        const userEducation = await userEducationModel
+            .find({
+                userId: userId
+            })
+            .select('-userId -createdAt -updatedAt -__v')
 
-        // const userEducation = await userEducationModel
-        //     .find({
-        //         userId: userId
-        //     })
-        //     .select('-userId -createdAt -updatedAt -__v')
+        const userAchievements = await userAchievementModel
+            .find({
+                userId: userId
+            })
+            .select('-userId -createdAt -updatedAt -__v')
 
-        // const userAchievements = await userAchievementModel
-        //     .find({
-        //         userId: userId
-        //     })
-        //     .select('-userId -createdAt -updatedAt -__v')
+        const userCertifications = await userCertificationModel
+            .find({
+                userId: userId
+            })
+            .select('-userId -createdAt -updatedAt -__v')
 
-        // const userCertifications = await userCertificationModel
-        //     .find({
-        //         userId: userId
-        //     })
-        //     .select('-userId -createdAt -updatedAt -__v')
+        const userDetails = {
+            educations: userEducation,
+            certifications: userCertifications,
+            achievements: userAchievements
+        }
 
-        // const userDetails = {
-        //     basicInfo: userBasicInfo,
-        //     educations: userEducation,
-        //     certifications: userCertifications,
-        //     achievements: userAchievements
-        // }
+        const courseCategoryList = []
 
-        // const preferences = {
-        //     focus: 'Both educations and activities',
-        //     locations: ['Madhya Pradesh', 'Maharashtra', 'Rajasthan'],
-        //     hostel: 'not necessary',
-        //     maxBudget: '500000',
-        //     examDetails: [
-        //         {
-        //             examName: 'JEE Mains',
-        //             isTaken: false
-        //         },
-        //         {
-        //             examName: 'JEE Advanced',
-        //             isTaken: false
-        //         },
-        //         {
-        //             examName: 'VITEEE',
-        //             isTaken: true,
-        //             rank: 20
-        //         },
-        //         {
-        //             examName: 'BITSAT',
-        //             isTaken: true,
-        //             rank: 20
-        //         }
-        //     ]
-        // }
+        if (educationLevel === EEducationLevel.UG) {
+            switch (degreeCategory) {
+                case EDegreeCategory.ENGINEERING_TECHNOLOGY:
+                    courseCategoryList.push('B.Tech', 'B.Tech + M.Tech', 'BE', 'BS', 'BS + MS')
+                    break
+                case EDegreeCategory.MANAGEMENT_BUSINESS:
+                    courseCategoryList.push('BBA', 'BMS')
+                    break
+                case EDegreeCategory.MEDICAL_PHARMACY:
+                    courseCategoryList.push('MBBS', 'BDS', 'B.Pharm', 'BPT', 'BHMS', 'BAMS')
+                    break
+                case EDegreeCategory.SCIENCE_RESEARCH:
+                    courseCategoryList.push('B.Sc', 'B.S')
+                    break
+                case EDegreeCategory.ARCHITECTURE_DESIGN:
+                    courseCategoryList.push('B.Arch', 'B.Des')
+                    break
+                default:
+                    courseCategoryList.push('BA', 'BCA', 'B.Ed')
+            }
+        } else if (educationLevel === EEducationLevel.PG) {
+            switch (degreeCategory) {
+                case EDegreeCategory.ENGINEERING_TECHNOLOGY:
+                    courseCategoryList.push('M.Tech', 'ME', 'M.S')
+                    break
+                case EDegreeCategory.MANAGEMENT_BUSINESS:
+                    courseCategoryList.push('MBA', 'Integrated MBA', 'MPP')
+                    break
+                case EDegreeCategory.MEDICAL_PHARMACY:
+                    courseCategoryList.push('M.Pharm', 'MD', 'MDS')
+                    break
+                case EDegreeCategory.SCIENCE_RESEARCH:
+                    courseCategoryList.push('M.Sc', 'M.S', 'Ph.D')
+                    break
+                case EDegreeCategory.ARCHITECTURE_DESIGN:
+                    courseCategoryList.push('M.Arch', 'M.Des')
+                    break
+                default:
+                    courseCategoryList.push('M.A', 'L.L.M', 'MCA', 'Polytechnic')
+            }
+        }
 
-        // const institutions = await institutionModel.aggregate([
-        //     {
-        //         $lookup: {
-        //             from: 'courses',
-        //             let: { institutionId: '$_id' },
-        //             pipeline: [
-        //                 {
-        //                     $match: {
-        //                         $expr: { $eq: ['$institutionId', '$$institutionId'] }
-        //                     }
-        //                 },
-        //                 {
-        //                     $match: { courseCategory: { $in: intrestCourse } }
-        //                 }
-        //             ],
-        //             as: 'courses'
-        //         }
-        //     }
-        // ])
+        const categoryFilter = { category: { $in: courseCategoryList } }
+        const budgetFilter = budget ? { fees: { $lte: budget } } : {}
 
-        // const prompt = `
-        // You are an expert college recommendation system. Based on the following user details, preferences, and available institutions, recommend the top 5 institutions that best fit the user.
+        const courses = await courseModel.aggregate([
+            { $match: { ...categoryFilter, ...budgetFilter } },
+            {
+                $lookup: {
+                    from: 'institutions',
+                    localField: 'institutionId',
+                    foreignField: '_id',
+                    as: 'institution'
+                }
+            },
+            { $unwind: '$institution' },
+            { $match: hostel !== undefined ? { 'institution.hostel': hostel } : {} },
+            {
+                $project: {
+                    courseId: '$_id',
+                    courseName: 1,
+                    category: 1,
+                    duration: 1,
+                    eligibility: 1,
+                    mode: 1,
+                    fees: 1,
+                    institutionId: '$institution._id',
+                    institutionName: '$institution.institutionName',
+                    hostel: '$institution.hostel'
+                }
+            }
+        ])
 
-        // Consider the following factors while recommending institutions:
-        // - The user’s **educational background**, **skills**, **achievements**, and **certifications**.
-        // - The user's **preferred focus** (academics, extracurricular activities, or both).
-        // - The **budget constraint** (only recommend institutions within the budget).
-        // - The **hostel requirement** (if true, prioritize institutions with hostel facilities).
-        // - The **preferred locations** (recommend institutions only in these locations).
-        // - The **user's interest in specific courses** (prioritize institutions offering these courses).
-        // - The **user’s exam details**, including **exam names, scores, and ranks**, to evaluate the best fit.
-        //    * For IIT look to JEE Advanced (if isTaken true then show only rank or score qualified institutions)
-        //    * Fot NIT look for JEE Mains (if isTaken true then show only rank or score qualified institutions)
-        //    * For VIT look for VITEEE (if isTaken true then show only rank or score qualified institutions)
-        //    * For BITS look for BITS (if isTaken true then show only rank or score qualified institutions)
-        //    * If all exam criteria fails then look for other institutions
+        const examDetailList: { examName: EExam; isTaken: boolean; rank?: number }[] = []
 
-        // **User Details:**
-        // ${JSON.stringify(userDetails, null, 2)}
+        if (examDetails) {
+            examDetails.map((examDetail) => {
+                let obj
+                if (examDetail.isTaken) {
+                    obj = {
+                        examName: examDetail.examName,
+                        isTaken: examDetail.isTaken,
+                        rank: examDetail.rank
+                    }
+                } else {
+                    obj = {
+                        examName: examDetail.examName,
+                        isTaken: examDetail.isTaken
+                    }
+                }
+                examDetailList.push(obj)
+            })
+        }
 
-        // **Preferences:**
-        // ${JSON.stringify(preferences, null, 2)}
+        const prompt = `
+        You are an expert AI-powered college recommendation system. Based on the user’s academic profile, achievements, certifications, exam results, and preferences, your goal is to recommend the **best 5 best-fit institutions** from the given list.
+        ### **Evaluation Criteria:**
+        1. **Exam Performance & Eligibility:**
+        - Prioritize institutions based on relevant entrance exam performance.
+        - Ensure that the user meets the eligibility criteria before considering an institution.
+        - **Match exams with institutions:**
+            - **IITs → JEE Advanced** (if isTaken is true, prioritize institutions where the user meets rank/score criteria).
+            - **NITs → JEE Mains**
+            - **VIT → VITEEE**
+            - **BITS → BITSAT**
+            - **Other institutions → Consider alternative eligibility criteria**
 
-        // **Institutions:**
-        // ${JSON.stringify(institutions, null, 2)}
+        2. **Educational Background, Certifications & Achievements:**
+        - Favor institutions aligned with the user's education, skills, and accomplishments.
+        - If the user has domain-specific certifications or achievements, prioritize institutions that recognize them.
 
-        // Return only a JSON array of the top 5 institution IDs in the following format:
-        // ['institutionId1', 'institutionId2', 'institutionId3', 'institutionId4', 'institutionId5']
-        // Do not include any additional text or explanation.
-        // `
+        3. **Ranking & Selection:**
+        - First, filter institutions based on **exam eligibility** and **budget**.
+        - Then, rank them based on **education, certifications, achievements, and user preferences**.
+        - Finally, return **only the best 5 institutions** in JSON format.
 
-        // const chatGptResponse = await axios.post(
-        //     'https://api.openai.com/v1/chat/completions',
-        //     {
-        //         model: 'gpt-3.5-turbo',
-        //         messages: [{ role: 'system', content: prompt }],
-        //         temperature: 0.7
-        //     },
-        //     {
-        //         headers: {
-        //             Authorization: `Bearer ${config.OPENAI_API_LINK}`,
-        //             'Content-Type': 'application/json'
-        //         }
-        //     }
-        // )
+        ### **User Profile:**
+        ${JSON.stringify(userDetails, null, 2)}
 
-        // // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        // const recommendedIds: string = chatGptResponse.data.choices[0].message.content
+        ### **Available Institutions:**
+        ${JSON.stringify(courses, null, 2)}
 
-        // // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        // const parsedIds: string[] = typeof recommendedIds === 'string' ? JSON.parse(recommendedIds) : recommendedIds
-
-        // const recommendations = await institutionModel.find({
-        //     _id: { $in: parsedIds.map((id) => new mongoose.Types.ObjectId(id)) }
-        // })
-
-        const recommendations = [
-            { institutionId: '67da7a19493705fc4fa01b5c', courseId: '67dcf0b200d67238261d1e97' },
-            { institutionId: '67da7ac0493705fc4fa01b7d', courseId: '67dd4d4d00d67238261d1ea6' },
-            { institutionId: '67da7b24493705fc4fa01b93', courseId: '67dd50ef00d67238261d1eb1' },
-            { institutionId: '67da7c46493705fc4fa01bc1', courseId: '67dd567800d67238261d1ec5' },
-            { institutionId: '67da9108493705fc4fa01d3f', courseId: '67de6781f7a9ff8d4fd73ff8' }
+        ### **Output Format:**
+        Return only a JSON array of the best 5 institution IDs in the following format:
+        [
+           {'institutionId1', 'courseId1'},
+           {'institutionId2', 'courseId2'},
+           {'institutionId3', 'courseId3'},
+           {'institutionId4', 'courseId4'},
+           {'institutionId5', 'courseId5'},
         ]
+        Use courseId for courseIds and institutionId for institutionIds and ignore _id
+        Do not include any additional text or explanation.
+        `
+
+        const chatGptResponse = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: 'gpt-3.5-turbo',
+                messages: [{ role: 'system', content: prompt }],
+                temperature: 0.7
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${config.OPENAI_API_LINK}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        )
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const recommendedIds: string = chatGptResponse.data.choices[0].message.content
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const parsedIds: { institutionId: string; courseId: string }[] = JSON.parse(recommendedIds)
+
+        if (!Array.isArray(parsedIds) || parsedIds.some((item) => typeof item !== 'object')) {
+            throw new Error('Invalid format received from model response')
+        }
+
+        const recommendations = parsedIds.map((item) => {
+            const institutionIdKey = Object.keys(item).find((key) => key.startsWith('institutionId'))
+            const courseIdKey = Object.keys(item).find((key) => key.startsWith('courseId'))
+
+            if (!institutionIdKey || !courseIdKey) {
+                throw new Error('Invalid response format')
+            }
+
+            return {
+                institutionId: item[institutionIdKey as 'institutionId'],
+                courseId: item[courseIdKey as 'courseId']
+            }
+        })
 
         const recommendationsDetails = []
 
