@@ -175,7 +175,7 @@ export const GetAllInstitutions = async (
         if (typeof admission === 'boolean') {
             query.admission = admission
         }
-        
+
         const institutions = await institutionModel.aggregate([
             { $match: query },
             {
@@ -228,7 +228,13 @@ export const GetAllInstitutions = async (
             },
             {
                 $addFields: {
-                    courseCategories: '$courseCategories.courseCategory',
+                    courseCategories: {
+                        $reduce: {
+                            input: '$courseCategories',
+                            initialValue: [],
+                            in: { $concatArrays: ['$$value', '$$this.courseCategory'] }
+                        }
+                    },
                     minCourseFees: { $arrayElemAt: ['$courseFees.minFees', 0] },
                     maxCourseFees: { $arrayElemAt: ['$courseFees.maxFees', 0] }
                 }
