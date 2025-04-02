@@ -78,7 +78,7 @@ export const forgotPasswordTemplate = (passwordResetLink: string) =>
                         alt="Company Logo"
                         class="company-logo"
                         loading="lazy" />
-                    <div class="company-name">Work Nest</div>
+                    <div class="company-name">Career Go</div>
                 </div>
                 <div class="email-header">Password Reset Request</div>
                 <div class="email-body">

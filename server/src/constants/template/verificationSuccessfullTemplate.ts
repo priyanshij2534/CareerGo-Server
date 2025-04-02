@@ -80,7 +80,7 @@ export const verificationSuccessfullTemplate = () =>
                         alt="Company Logo"
                         class="company-logo"
                         loading="lazy" />
-                    <div class="company-name">Work Nest</div>
+                    <div class="company-name">Career Go</div>
                 </div>
                 <div class="email-header">Account Verified</div>
                 <div class="email-body">

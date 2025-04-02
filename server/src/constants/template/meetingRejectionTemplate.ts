@@ -1,4 +1,4 @@
-export const changePasswordTemplate = () =>
+export const meetingRejectionTemplate = (date: string, time: string) =>
     `<!doctype html>
     <html lang="en">
         <head>
@@ -6,7 +6,7 @@ export const changePasswordTemplate = () =>
             <meta
                 name="viewport"
                 content="width=device-width, initial-scale=1.0" />
-            <title>Password Changed</title>
+            <title>Meeting Rejected</title>
             <style>
                 body {
                     font-family: Arial, sans-serif;
@@ -68,10 +68,12 @@ export const changePasswordTemplate = () =>
                         loading="lazy" />
                     <div class="company-name">Career Go</div>
                 </div>
-                <div class="email-header">Password Changed</div>
+                <div class="email-header">Meeting Rejected</div>
                 <div class="email-body">
-                    <p>Your password has been successfully changed.</p>
-                    <p>If you didn’t make this change, please contact our support team immediately to secure your account.</p>
+                    <p>We regret to inform you that your meeting request has been rejected.</p>
+                    <p>Date: <strong>${date}</strong></p>
+                    <p>Time: <strong>${time}</strong></p>
+                    <p>Please reach out to our support team if you need further assistance.</p>
                 </div>
                 <div class="footer">If you have any questions, feel free to contact our support team.</div>
             </div>

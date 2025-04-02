@@ -79,7 +79,7 @@ export const emailVerificationTemplate = (verificationLink: string) =>
                         class="company-logo" 
                         loading="lazy"
                     />
-                    <div class="company-name">Work Nest</div>
+                    <div class="company-name">Career Go</div>
                 </div>
                 <div class="email-header">Confirm Your Email Address</div>
                 <div class="email-body">

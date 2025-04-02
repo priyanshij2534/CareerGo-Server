@@ -37,5 +37,15 @@ export const GetDomain = (url: string) => {
 }
 
 export const GenerateResetPasswordExpiry = (minute: number) => {
-    return dayjs().valueOf() + (minute * 60 * 1000)
+    return dayjs().valueOf() + minute * 60 * 1000
+}
+
+export function formatDate(date: Date): string {
+    const options: Intl.DateTimeFormatOptions = {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    }
+
+    return date.toLocaleDateString('en-GB', options)
 }

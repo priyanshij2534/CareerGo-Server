@@ -202,7 +202,7 @@ export const ResendVerifyAccount = async (emailAddress: string): Promise<ApiMess
         return {
             success: true,
             status: 200,
-            message: responseMessage.SUCCESS,
+            message: 'Verification link sent successfully',
             data: null
         }
     } catch (error) {

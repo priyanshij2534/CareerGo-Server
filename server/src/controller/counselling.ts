@@ -9,6 +9,11 @@ import counsellingModel from '../model/Counselling/counsellingModel'
 import { ApprovalDTO } from '../constants/DTO/Counselling/ApprovalDTO'
 import { ECounsellingStatus } from '../constants/applicationEnums'
 import { RescheduleCounsellingDTO } from '../constants/DTO/Counselling/RescheduleDTO'
+import { meetingRequestTemplate } from '../constants/template/meetingRequestTemplate'
+import { sendEmail } from '../service/nodemailerService'
+import { formatDate } from '../utils/helper/syncHelpers'
+import { meetingApprovalTemplate } from '../constants/template/meetingApprovalTemplate'
+import { meetingRejectionTemplate } from '../constants/template/meetingRejectionTemplate'
 
 export const BookNewCounsellingMeeting = async (input: CounsellingDTO, userId: string): Promise<ApiMessage> => {
     const { date, time, institutionId, purpose } = input
@@ -44,6 +49,12 @@ export const BookNewCounsellingMeeting = async (input: CounsellingDTO, userId: s
             meetingURL: null
         }
         const counselling = await counsellingModel.create(payload)
+
+        const to = [institution.emailAddress]
+        const formattedDate = formatDate(counselling.date)
+        const subject = `Counselling Request: Scheduled by ${user.name} on ${formattedDate} at ${counselling.time}`
+        const HTML = meetingRequestTemplate(user.name, formattedDate, counselling.time)
+        await sendEmail(to, subject, HTML)
 
         return {
             success: true,
@@ -114,16 +125,36 @@ export const ApproveCounsellingMeeting = async (input: ApprovalDTO, counsellingI
             }
         }
 
+        const requestingUser = await userModel.findById(counsellingMeeting.userId)
+        if(!requestingUser) {
+            return {
+                success: false,
+                status: 400,
+                message: responseMessage.NOT_FOUND('User'),
+                data: null
+            }
+        }
+
         counsellingMeeting.isApproved = approval
 
+        const to = [institution.emailAddress]
+        const formattedDate = formatDate(counsellingMeeting.date)
+        let subject;
+        let HTML 
+        
         if (approval) {
             counsellingMeeting.meetingURL = 'https://meet.google.com/oae-vpbv-mdy'
+            subject = `Counselling Request Approved: Scheduled on ${formattedDate} at ${counsellingMeeting.time} with ${institution.institutionName}`
+            HTML = meetingApprovalTemplate(formattedDate, counsellingMeeting.time, counsellingMeeting.meetingURL)
             counsellingMeeting.status = ECounsellingStatus.APPROVED
         } else {
+            subject = `Counselling Request Rejected`
+            HTML = meetingRejectionTemplate(formattedDate, counsellingMeeting.time)
             counsellingMeeting.status = ECounsellingStatus.REJECTED
             counsellingMeeting.diApprovalReason = disapprovalReason ? disapprovalReason : null
         }
-
+        
+        await sendEmail(to, subject, HTML)
         await counsellingMeeting.save()
 
         return {
@@ -256,7 +287,7 @@ export const RescheduleCounsellingMeeting = async (meetingId: string, userId: st
 
         let institution
 
-        if(user.institution.isAssociated) {
+        if (user.institution.isAssociated) {
             institution = await institutionModel.findById(user.institution.institutionId)
         }
 
