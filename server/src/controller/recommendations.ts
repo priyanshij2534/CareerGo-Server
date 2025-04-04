@@ -267,7 +267,7 @@ export const GetRecommendations = async (userId: string, input: RecommendationsD
                 recommendations: recommendationsDetails
             }
         }
-    } catch (error) {
+    } catch (error) {        
         const errMessage = error instanceof Error ? error.message : responseMessage.SOMETHING_WENT_WRONG
         return {
             success: false,

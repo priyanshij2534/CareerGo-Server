@@ -14,6 +14,7 @@ import { sendEmail } from '../service/nodemailerService'
 import { formatDate } from '../utils/helper/syncHelpers'
 import { meetingApprovalTemplate } from '../constants/template/meetingApprovalTemplate'
 import { meetingRejectionTemplate } from '../constants/template/meetingRejectionTemplate'
+import { getMeetingUrl } from '../service/gMeetService'
 
 export const BookNewCounsellingMeeting = async (input: CounsellingDTO, userId: string): Promise<ApiMessage> => {
     const { date, time, institutionId, purpose } = input
@@ -143,7 +144,7 @@ export const ApproveCounsellingMeeting = async (input: ApprovalDTO, counsellingI
         let HTML 
         
         if (approval) {
-            counsellingMeeting.meetingURL = 'https://meet.google.com/oae-vpbv-mdy'
+            counsellingMeeting.meetingURL = getMeetingUrl(counsellingMeeting.date.toString(), counsellingMeeting.time)
             subject = `Counselling Request Approved: Scheduled on ${formattedDate} at ${counsellingMeeting.time} with ${institution.institutionName}`
             HTML = meetingApprovalTemplate(formattedDate, counsellingMeeting.time, counsellingMeeting.meetingURL)
             counsellingMeeting.status = ECounsellingStatus.APPROVED
